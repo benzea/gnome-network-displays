@@ -1,0 +1,7 @@
+data/org.gnome.Screencast.desktop.in
+data/org.gnome.Screencast.appdata.xml.in
+data/org.gnome.Screencast.gschema.xml
+src/gnome-screencast-window.ui
+src/main.c
+src/gnome-screencast-window.c
+
