@@ -1,4 +1,4 @@
-/* gnome-screencast-window.h
+/* screencast-meta-sink.h
  *
  * Copyright 2018 Benjamin Berg <bberg@redhat.com>
  *
@@ -18,11 +18,20 @@
 
 #pragma once
 
-#include <gtk/gtk.h>
+#include "screencast-sink.h"
 
 G_BEGIN_DECLS
 
-#define GNOME_SCREENCAST_TYPE_WINDOW (gnome_screencast_window_get_type ())
-G_DECLARE_FINAL_TYPE (GnomeScreencastWindow, gnome_screencast_window, GNOME_SCREENCAST, WINDOW, GtkApplicationWindow)
+#define SCREENCAST_TYPE_META_SINK (screencast_meta_sink_get_type ())
+G_DECLARE_FINAL_TYPE (ScreencastMetaSink, screencast_meta_sink, SCREENCAST, META_SINK, GObject)
+
+ScreencastMetaSink *  screencast_meta_sink_new (ScreencastSink * sink);
+
+ScreencastSink *      screencast_meta_sink_get_sink (ScreencastMetaSink * meta_sink);
+void                  screencast_meta_sink_add_sink (ScreencastMetaSink *meta_sink,
+                                                     ScreencastSink     *sink);
+gboolean              screencast_meta_sink_remove_sink (ScreencastMetaSink *meta_sink,
+                                                        ScreencastSink     *sink);
+
 
 G_END_DECLS

@@ -1,4 +1,4 @@
-/* gnome-screencast-window.h
+/* screencast-wfd-p2p-provider.h
  *
  * Copyright 2018 Benjamin Berg <bberg@redhat.com>
  *
@@ -18,11 +18,19 @@
 
 #pragma once
 
-#include <gtk/gtk.h>
+#include <NetworkManager.h>
+#include "screencast-provider.h"
 
 G_BEGIN_DECLS
 
-#define GNOME_SCREENCAST_TYPE_WINDOW (gnome_screencast_window_get_type ())
-G_DECLARE_FINAL_TYPE (GnomeScreencastWindow, gnome_screencast_window, GNOME_SCREENCAST, WINDOW, GtkApplicationWindow)
+#define SCREENCAST_TYPE_WFD_P2P_PROVIDER (screencast_wfd_p2p_provider_get_type ())
+G_DECLARE_FINAL_TYPE (ScreencastWFDP2PProvider, screencast_wfd_p2p_provider, SCREENCAST, WFD_P2P_PROVIDER, GObject)
+
+
+ScreencastWFDP2PProvider * screencast_wfd_p2p_provider_new (NMClient * client, NMDevice * device);
+
+NMClient *  screencast_wfd_p2p_provider_get_client (ScreencastWFDP2PProvider *provider);
+NMDevice *  screencast_wfd_p2p_provider_get_device (ScreencastWFDP2PProvider *provider);
+
 
 G_END_DECLS

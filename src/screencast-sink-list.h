@@ -1,4 +1,4 @@
-/* gnome-screencast-window.h
+/* screencast-sink-list.h
  *
  * Copyright 2018 Benjamin Berg <bberg@redhat.com>
  *
@@ -19,10 +19,17 @@
 #pragma once
 
 #include <gtk/gtk.h>
+#include "screencast-provider.h"
 
 G_BEGIN_DECLS
 
-#define GNOME_SCREENCAST_TYPE_WINDOW (gnome_screencast_window_get_type ())
-G_DECLARE_FINAL_TYPE (GnomeScreencastWindow, gnome_screencast_window, GNOME_SCREENCAST, WINDOW, GtkApplicationWindow)
+#define SCREENCAST_TYPE_SINK_LIST (screencast_sink_list_get_type ())
+G_DECLARE_FINAL_TYPE (ScreencastSinkList, screencast_sink_list, SCREENCAST, SINK_LIST, GtkListBox)
+
+ScreencastSinkList * screencast_sink_list_new (ScreencastProvider * provider);
+
+void screencast_sink_list_set_provider (ScreencastSinkList *sink_list,
+                                        ScreencastProvider *provider);
+ScreencastProvider *screencast_sink_list_get_provider (ScreencastSinkList *sink_list);
 
 G_END_DECLS

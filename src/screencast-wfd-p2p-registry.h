@@ -1,4 +1,4 @@
-/* gnome-screencast-window.h
+/* screencast-wfd-p2p-registry.h
  *
  * Copyright 2018 Benjamin Berg <bberg@redhat.com>
  *
@@ -18,11 +18,13 @@
 
 #pragma once
 
-#include <gtk/gtk.h>
+#include "screencast-meta-provider.h"
 
 G_BEGIN_DECLS
 
-#define GNOME_SCREENCAST_TYPE_WINDOW (gnome_screencast_window_get_type ())
-G_DECLARE_FINAL_TYPE (GnomeScreencastWindow, gnome_screencast_window, GNOME_SCREENCAST, WINDOW, GtkApplicationWindow)
+#define SCREENCAST_TYPE_WFD_P2P_REGISTRY (screencast_wfd_p2p_registry_get_type ())
+G_DECLARE_FINAL_TYPE (ScreencastWFDP2PRegistry, screencast_wfd_p2p_registry, SCREENCAST, WFD_P2P_REGISTRY, GObject)
+
+ScreencastWFDP2PRegistry * screencast_wfd_p2p_registry_new (ScreencastMetaProvider * meta_provider);
 
 G_END_DECLS

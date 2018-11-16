@@ -1,4 +1,4 @@
-/* gnome-screencast-window.h
+/* screencast-sink-row.h
  *
  * Copyright 2018 Benjamin Berg <bberg@redhat.com>
  *
@@ -19,10 +19,15 @@
 #pragma once
 
 #include <gtk/gtk.h>
+#include "screencast-sink.h"
 
 G_BEGIN_DECLS
 
-#define GNOME_SCREENCAST_TYPE_WINDOW (gnome_screencast_window_get_type ())
-G_DECLARE_FINAL_TYPE (GnomeScreencastWindow, gnome_screencast_window, GNOME_SCREENCAST, WINDOW, GtkApplicationWindow)
+#define SCREENCAST_TYPE_SINK_ROW (screencast_sink_row_get_type ())
+G_DECLARE_FINAL_TYPE (ScreencastSinkRow, screencast_sink_row, SCREENCAST, SINK_ROW, GtkListBoxRow)
+
+ScreencastSinkRow * screencast_sink_row_new (ScreencastSink * sink);
+
+ScreencastSink * screencast_sink_row_get_sink (ScreencastSinkRow *sink_row);
 
 G_END_DECLS

@@ -17,7 +17,7 @@
  */
 
 #include <glib/gi18n.h>
-
+#include <gst/gst.h>
 #include "gnome-screencast-config.h"
 #include "gnome-screencast-window.h"
 
@@ -58,6 +58,8 @@ main (int   argc,
   bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
   bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
   textdomain (GETTEXT_PACKAGE);
+
+  gst_init (&argc, &argv);
 
   /*
    * Create a new GtkApplication. The application manages our main loop,

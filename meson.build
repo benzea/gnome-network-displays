@@ -2,6 +2,7 @@ project('gnome-screencast', 'c',        version: '0.1.0',
   meson_version: '>= 0.40.0',
 )
 
+gnome = import('gnome')
 i18n = import('i18n')
 
 config_h = configuration_data()

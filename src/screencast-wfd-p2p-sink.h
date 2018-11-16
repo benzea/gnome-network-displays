@@ -1,4 +1,4 @@
-/* gnome-screencast-window.h
+/* screencast-wfd-p2p-sink.h
  *
  * Copyright 2018 Benjamin Berg <bberg@redhat.com>
  *
@@ -19,10 +19,19 @@
 #pragma once
 
 #include <gtk/gtk.h>
+#include <NetworkManager.h>
+#include "screencast-sink.h"
 
 G_BEGIN_DECLS
 
-#define GNOME_SCREENCAST_TYPE_WINDOW (gnome_screencast_window_get_type ())
-G_DECLARE_FINAL_TYPE (GnomeScreencastWindow, gnome_screencast_window, GNOME_SCREENCAST, WINDOW, GtkApplicationWindow)
+#define SCREENCAST_TYPE_WFD_P2P_SINK (screencast_wfd_p2p_sink_get_type ())
+G_DECLARE_FINAL_TYPE (ScreencastWFDP2PSink, screencast_wfd_p2p_sink, SCREENCAST, WFD_P2P_SINK, GObject)
+
+ScreencastWFDP2PSink *  screencast_wfd_p2p_sink_new (NMClient * client, NMDevice * device, NMP2PPeer * peer);
+
+NMClient *   screencast_wfd_p2p_sink_get_client (ScreencastWFDP2PSink * sink);
+NMDevice *   screencast_wfd_p2p_sink_get_device (ScreencastWFDP2PSink * sink);
+NMP2PPeer *  screencast_wfd_p2p_sink_get_peer (ScreencastWFDP2PSink * sink);
+
 
 G_END_DECLS

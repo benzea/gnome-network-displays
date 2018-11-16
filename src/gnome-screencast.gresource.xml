@@ -2,5 +2,6 @@
 <gresources>
   <gresource prefix="/org/gnome/screencast">
     <file>gnome-screencast-window.ui</file>
+    <file>screencast-sink-row.ui</file>
   </gresource>
 </gresources>
