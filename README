@@ -1,0 +1,11 @@
+This is an experimental GNOME Screencaster implementing Wi-Fi Display (aka Miracast).
+
+Currently a test image will be streamed.
+
+To use it, you will need:
+ * openh264 or x264
+ * NetworkManager P2P patches
+   https://gitlab.freedesktop.org/NetworkManager/NetworkManager/merge_requests/24
+
+The changes are work in progress and need cleaning up. However, this should
+already work with at least some Miracast devices.
