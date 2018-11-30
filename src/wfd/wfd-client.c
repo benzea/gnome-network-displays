@@ -427,10 +427,13 @@ wfd_client_pre_options_request (GstRTSPClient *client, GstRTSPContext *ctx)
 
   if (self->init_state <= INIT_STATE_M2_SINK_QUERY_OPTIONS)
     {
-      if (self->init_state == INIT_STATE_M1_SOURCE_QUERY_OPTIONS)
-        g_warning ("WfdClient: Got OPTIONS before getting reply querying WFD support; continuing anyway.");
-
-      g_idle_add_full (G_PRIORITY_LOW, wfd_client_idle_wfd_query_params, g_object_ref (client), NULL);
+      if (self->init_state != INIT_STATE_M2_SINK_QUERY_OPTIONS)
+        {
+          g_warning ("WfdClient: Got OPTIONS before getting reply querying WFD support; assuming normal RTSP connection.");
+          self->init_state = INIT_STATE_DONE;
+        }
+      else
+        g_idle_add (wfd_client_idle_wfd_query_params, g_object_ref (client));
     }
 
   return GST_RTSP_STS_OK;
@@ -503,6 +506,9 @@ void
 wfd_client_query_support (WfdClient *self)
 {
   GstRTSPMessage msg = { 0 };
+
+  if (self->init_state != INIT_STATE_M0_INVALID)
+    return;
 
   self->init_state = INIT_STATE_M1_SOURCE_QUERY_OPTIONS;
   gst_rtsp_message_init_request (&msg, GST_RTSP_OPTIONS, "*");
