@@ -10,6 +10,16 @@ To use it, you will need:
 The changes are work in progress and need cleaning up. However, this should
 already work with at least some Miracast devices.
 
+Issues
+======
+
+If there is any connection failure or similar, you will need to restart the
+program to try again.
+
+This program requires support for remote desktop in mutter. If this support is
+not available for you, then you can turn the "screencast_portal" compile time
+option off to fall back to X11 based screen grabbing.
+
 
 Testing
 =======
