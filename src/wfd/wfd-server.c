@@ -96,15 +96,43 @@ timeout_query_wfd_support (gpointer user_data)
 {
   WfdClient *client = WFD_CLIENT (user_data);
 
+  g_object_set_data (G_OBJECT (client),
+                     "wfd-query-support-timeout",
+                     NULL);
+
   wfd_client_query_support (client);
 
   return G_SOURCE_REMOVE;
 }
 
 static void
+wfd_server_client_closed (GstRTSPServer *server, GstRTSPClient *client)
+{
+  guint query_support_id;
+
+  query_support_id = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (client),
+                                                          "wfd-query-support-timeout"));
+
+  if (query_support_id)
+    g_source_remove (query_support_id);
+}
+
+static void
 wfd_server_client_connected (GstRTSPServer *server, GstRTSPClient *client)
 {
-  g_timeout_add (500, timeout_query_wfd_support, client);
+  guint query_support_id;
+
+  query_support_id = g_timeout_add (500, timeout_query_wfd_support, client);
+
+  g_object_set_data (G_OBJECT (client),
+                     "wfd-query-support-timeout",
+                     GUINT_TO_POINTER (query_support_id));
+
+  g_signal_connect_object (client,
+                           "closed",
+                           (GCallback) wfd_server_client_closed,
+                           server,
+                           G_CONNECT_SWAPPED);
 }
 
 static void

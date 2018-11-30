@@ -21,6 +21,7 @@ struct _WfdClient
   GstRTSPClient      parent_instance;
 
   guint              keep_alive_source_id;
+  guint              idle_source_id;
 
   WfdClientInitState init_state;
   WfdParams         *params;
@@ -50,6 +51,28 @@ static const gchar * supported_rtsp_features[] = {
   NULL
 };
 
+void
+idle_handler_destroy (gpointer user_data)
+{
+  WfdClient *self = WFD_CLIENT (user_data);
+
+  self->idle_source_id = 0;
+}
+
+static void
+register_idle_handler (WfdClient *self, GSourceFunc callback)
+{
+  if (self->idle_source_id)
+    {
+      g_warning ("WfdClient: Already have one idle handler scheduled, removing it");
+      g_source_remove (self->idle_source_id);
+    }
+  self->idle_source_id = g_idle_add_full (G_PRIORITY_DEFAULT,
+                                            callback,
+                                            self,
+                                            idle_handler_destroy);
+}
+
 WfdClient *
 wfd_client_new (void)
 {
@@ -66,6 +89,10 @@ wfd_client_finalize (GObject *object)
   if (self->keep_alive_source_id)
     g_source_remove (self->keep_alive_source_id);
   self->keep_alive_source_id = 0;
+
+  if (self->idle_source_id)
+    g_source_remove (self->idle_source_id);
+  self->idle_source_id = 0;
 
   G_OBJECT_CLASS (wfd_client_parent_class)->finalize (object);
 }
@@ -308,12 +335,12 @@ wfd_client_handle_response (GstRTSPClient * client, GstRTSPContext *ctx)
       /* XXX: Pick the better profile if we have an encoder that supports it! */
       wfd_client_select_codec_and_resolution (self, WFD_H264_PROFILE_BASE);
 
-      g_idle_add (wfd_client_idle_set_params, client);
+      register_idle_handler (self, wfd_client_idle_set_params);
       break;
 
     case INIT_STATE_M4_SOURCE_SET_PARAMS:
       g_debug ("WfdClient: SET_PARAMS done");
-      g_idle_add (wfd_client_trigger_setup_idle, self);
+      register_idle_handler (self, wfd_client_trigger_setup_idle);
       break;
 
     case INIT_STATE_M5_SOURCE_TRIGGER_SETUP:
