@@ -118,7 +118,7 @@ screencast_portal_init_async_cb (GObject *source_object,
   window->portal = SCREENCAST_PORTAL (source_object);
 
   /* Try starting a gstreamer pipeline */
-  pipeline = gst_pipeline_new ("pipewire to internal sink");
+  pipeline = GST_PIPELINE (gst_pipeline_new ("pipewire to internal sink"));
   src = screencast_portal_get_source (window->portal);
   gst_bin_add (GST_BIN(pipeline), src);
 
