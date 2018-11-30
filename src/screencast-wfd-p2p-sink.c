@@ -112,7 +112,7 @@ screencast_wfd_p2p_sink_get_property (GObject    *object,
       break;
 
     case PROP_STATE:
-      g_value_set_enum (value, SCREENCAST_SINK_STATE_DISCONNECTED);
+      g_value_set_enum (value, sink->state);
       break;
 
     default:
@@ -347,7 +347,7 @@ screencast_wfd_p2p_sink_sink_start_stream (ScreencastSink *sink, ScreencastPorta
                                                  p2p_connected,
                                                  sink);
 
-  return sink;
+  return g_object_ref (sink);
 }
 
 /******************************************************************
