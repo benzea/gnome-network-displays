@@ -41,6 +41,7 @@ wfd_params_new (void)
 {
   WfdParams *self;
   WfdVideoCodec *basic_codec;
+  g_autoptr(GList) resolutions = NULL;
 
   self = g_slice_new0 (WfdParams);
 
@@ -52,6 +53,10 @@ wfd_params_new (void)
   self->video_codecs = g_ptr_array_new_with_free_func ((GDestroyNotify) wfd_video_codec_unref);
   basic_codec = wfd_video_codec_new_from_desc (0, "01 01 00000081 00000000 00000000 00 0000 0000 00 none none");
   g_ptr_array_add (self->video_codecs, basic_codec);
+
+  /* Set a default resolution (for testing purposes) */
+  self->selected_codec = wfd_video_codec_ref (basic_codec);
+  self->selected_resolution = wfd_resolution_copy (basic_codec->native);
 
   return self;
 }
@@ -145,9 +150,13 @@ wfd_params_m3_query_params (WfdParams *self)
 void
 wfd_params_from_sink (WfdParams *self, const guint8 *body, gsize body_size)
 {
-  g_auto(GStrv) lines;
+  g_auto(GStrv) lines = NULL;
   gchar **line;
   g_autofree gchar *body_str = NULL;
+
+  /* Empty body is probably testing, just keep the current values. */
+  if (body == NULL)
+    return;
 
   body_str = g_strndup ((gchar *) body, body_size);
   lines = g_strsplit (body_str, "\n", 0);

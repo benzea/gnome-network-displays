@@ -225,9 +225,11 @@ wfd_client_configure_client_media (GstRTSPClient * client,
                                    GstRTSPContext * ctx)
 {
   WfdClient *self = WFD_CLIENT (client);
-
   g_autoptr(GstElement) element;
   gboolean res;
+
+  g_return_val_if_fail (self->params->selected_codec, FALSE);
+  g_return_val_if_fail (self->params->selected_resolution, FALSE);
 
   self->media = WFD_MEDIA (media);
 
