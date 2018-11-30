@@ -39,11 +39,8 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
 
   g_autoptr(GstBin) bin = NULL;
   g_autoptr(GstCaps) caps = NULL;
-  GstElement *source;
+  GstElement *source = NULL;
   GstElement *scale;
-  GstElement *sourcefilter;
-  GstElement *imagefreeze;
-  GstElement *timecode;
   GstElement *sizefilter;
   GstElement *convert;
   GstElement *interlace;
@@ -58,39 +55,12 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
   bin = GST_BIN (gst_bin_new ("wfd-encoder-bin"));
 
   /* Test input, will be replaced by real source */
-  source = gst_element_factory_make ("intervideosrc", "wfd-intervideosrc");
+  g_signal_emit (self, signals[SIGNAL_CREATE_SOURCE], 0, &source);
+  g_assert (source);
   success &= gst_bin_add (bin, source);
-  g_object_set (source,
-                "do-timestamp", TRUE,
-                NULL);
-
-  /* g_signal_emit (self, signals[SIGNAL_CREATE_SOURCE], 0, &source); */
-  /* g_assert (source); */
-  /* success &= gst_bin_add (bin, source); */
 
   scale = gst_element_factory_make ("videoscale", "wfd-scale");
   success &= gst_bin_add (bin, scale);
-
-/*   caps = gst_caps_new_simple ("video/x-raw", */
-/*                               "framerate", GST_TYPE_FRACTION, 0, 1, */
-/* //                              "width", G_TYPE_INT, 600, */
-/* //                              "height", G_TYPE_INT, 400, */
-/*                               NULL); */
-/*   sourcefilter = gst_element_factory_make ("capsfilter", "wfd-sourcefilter"); */
-/*   success &= gst_bin_add (bin, sourcefilter); */
-/*   g_object_set (sourcefilter, */
-/*                 "caps", g_steal_pointer (&caps), */
-/*                 NULL); */
-
-/*   imagefreeze = gst_element_factory_make ("imagefreeze", "wfd-imagefreeze"); */
-/*   success &= gst_bin_add (bin, imagefreeze); */
-
-  /* timecode = gst_element_factory_make ("timecodestamper", "wfd-timecodestamper"); */
-  /* g_object_set (timecode, */
-  /*               "override-existing", TRUE, */
-  /*               "first-timecode-to-now", TRUE, */
-  /*               NULL); */
-  /* success &= gst_bin_add (bin, timecode); */
 
   caps = gst_caps_new_simple ("video/x-raw",
                               "framerate", GST_TYPE_FRACTION, 30, 1,

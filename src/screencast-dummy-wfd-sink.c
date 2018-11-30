@@ -166,9 +166,13 @@ client_connected_cb (ScreencastDummyWFDSink *sink, WfdClient *client, WfdServer 
 }
 
 static GstElement*
-server_source_create_cb (ScreencastDummyWFDSink *sink, WfdServer *server)
+server_create_source_cb (ScreencastDummyWFDSink *sink, WfdServer *server)
 {
-  return screencast_portal_get_source (sink->portal);
+  GstElement *res;
+
+  g_signal_emit_by_name (sink, "create-source", &res);
+
+  return res;
 }
 
 static ScreencastSink *
@@ -201,7 +205,7 @@ screencast_dummy_wfd_sink_sink_start_stream (ScreencastSink *sink, ScreencastPor
 
   g_signal_connect_object (self->server,
                            "create-source",
-                           (GCallback) server_source_create_cb,
+                           (GCallback) server_create_source_cb,
                            self,
                            G_CONNECT_SWAPPED);
 

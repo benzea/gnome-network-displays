@@ -44,6 +44,41 @@ struct _GnomeScreencastWindow
 
 G_DEFINE_TYPE (GnomeScreencastWindow, gnome_screencast_window, GTK_TYPE_APPLICATION_WINDOW)
 
+static GstElement*
+sink_create_source_cb (GnomeScreencastWindow *self, ScreencastSink *sink)
+{
+  GstBin *bin;
+  GstElement *src, *dst, *res;
+
+  bin = GST_BIN (gst_bin_new ("screencast source bin"));
+  src = screencast_portal_get_source (self->portal);
+  gst_bin_add (bin, src);
+
+  dst = gst_element_factory_make ("intervideosink", "inter video sink");
+  g_object_set (dst,
+                "channel", "screencast-inter-video",
+                NULL);
+  gst_bin_add (bin, dst);
+
+  gst_element_link_many (src, dst, NULL);
+
+  res = gst_element_factory_make ("intervideosrc", "screencastsrc");
+  g_object_set (res,
+                "do-timestamp", TRUE,
+                "timeout", 10000000000,
+                "channel", "screencast-inter-video",
+                NULL);
+
+  gst_bin_add (bin, res);
+
+  gst_element_add_pad (GST_ELEMENT (bin),
+                       gst_ghost_pad_new ("src",
+                                          gst_element_get_static_pad (res,
+                                          "src")));
+
+  return GST_ELEMENT (bin);
+}
+
 static void
 find_sink_list_row_activated_cb (GnomeScreencastWindow *self, ScreencastSinkRow *row, ScreencastSinkList *sink_list)
 {
@@ -60,6 +95,16 @@ find_sink_list_row_activated_cb (GnomeScreencastWindow *self, ScreencastSinkRow 
 
   sink = screencast_sink_row_get_sink (row);
   streaming_sink = screencast_sink_start_stream (sink, self->portal);
+
+  if (streaming_sink)
+    {
+      g_signal_connect_object (streaming_sink,
+                               "create-source",
+                               (GCallback) sink_create_source_cb,
+                               self,
+                               G_CONNECT_SWAPPED);
+
+    }
 
   /* XXX: leak streaming_sink intentionally for now */
   g_steal_pointer (&streaming_sink);
@@ -96,8 +141,6 @@ screencast_portal_init_async_cb (GObject *source_object,
                                  GAsyncResult *res,
                                  gpointer user_data)
 {
-  GstPipeline *pipeline;
-  GstElement *src, *dst;
   GnomeScreencastWindow *window;
   g_autoptr(GError) error = NULL;
 
@@ -117,20 +160,6 @@ screencast_portal_init_async_cb (GObject *source_object,
 
   window = GNOME_SCREENCAST_WINDOW (user_data);
   window->portal = SCREENCAST_PORTAL (source_object);
-
-  /* Try starting a gstreamer pipeline */
-  pipeline = GST_PIPELINE (gst_pipeline_new ("pipewire to internal sink"));
-  src = screencast_portal_get_source (window->portal);
-  gst_bin_add (GST_BIN(pipeline), src);
-
-  /* convert = gst_element_factory_make ("videoconvert", "test convert"); */
-  /* gst_bin_add (GST_BIN(pipeline), convert); */
-
-  dst = gst_element_factory_make ("intervideosink", "inter video sink");
-  gst_bin_add (GST_BIN(pipeline), dst);
-
-  gst_element_link_many (src, dst, NULL);
-  gst_element_set_state (GST_ELEMENT (pipeline), GST_STATE_PLAYING);
 }
 
 static void

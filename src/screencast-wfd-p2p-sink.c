@@ -255,9 +255,13 @@ client_connected_cb (ScreencastWFDP2PSink *sink, WfdClient *client, WfdServer *s
 }
 
 static GstElement*
-server_source_create_cb (ScreencastWFDP2PSink *sink, WfdServer *server)
+server_create_source_cb (ScreencastWFDP2PSink *sink, WfdServer *server)
 {
-  return screencast_portal_get_source (sink->portal);
+  GstElement *res;
+
+  g_signal_emit_by_name (sink, "create-source", &res);
+
+  return res;
 }
 
 static void
@@ -311,7 +315,7 @@ p2p_connected (GObject      *source_object,
 
   g_signal_connect_object (sink->server,
                            "create-source",
-                           (GCallback) server_source_create_cb,
+                           (GCallback) server_create_source_cb,
                            sink,
                            G_CONNECT_SWAPPED);
 
