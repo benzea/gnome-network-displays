@@ -51,7 +51,7 @@ wfd_params_new (void)
    * proper from the client.
    * Doing this is mainly useful for testing with normal RTSP clients. */
   self->video_codecs = g_ptr_array_new_with_free_func ((GDestroyNotify) wfd_video_codec_unref);
-  basic_codec = wfd_video_codec_new_from_desc (0, "01 01 00000081 00000000 00000000 00 0000 0000 00 none none");
+  basic_codec = wfd_video_codec_new_from_desc (7 << 3, "01 01 00000081 00000000 00000000 00 0000 0000 00 none none");
   g_ptr_array_add (self->video_codecs, basic_codec);
 
   /* Set a default resolution (for testing purposes) */

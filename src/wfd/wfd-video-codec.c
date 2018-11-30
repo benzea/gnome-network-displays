@@ -369,7 +369,7 @@ wfd_video_codec_get_resolutions (WfdVideoCodec *self)
     }
 
   i = 0;
-  for (bits = self->hh_sup; bits; bits = bits >> 1)
+  for (bits = self->cea_sup; bits; bits = bits >> 1)
     {
       if (bits & 0x1)
         res = g_list_append (res, (gpointer) resolution_table_lookup (RESOLUTION_TABLE_CEA, i));
@@ -377,7 +377,7 @@ wfd_video_codec_get_resolutions (WfdVideoCodec *self)
     }
 
   i = 0;
-  for (bits = self->hh_sup; bits; bits = bits >> 1)
+  for (bits = self->vesa_sup; bits; bits = bits >> 1)
     {
       if (bits & 0x1)
         res = g_list_append (res, (gpointer) resolution_table_lookup (RESOLUTION_TABLE_VESA, i));

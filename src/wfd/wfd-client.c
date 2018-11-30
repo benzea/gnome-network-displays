@@ -21,7 +21,6 @@ struct _WfdClient
   GstRTSPClient      parent_instance;
 
   guint              keep_alive_source_id;
-  guint              idle_source_id;
 
   WfdClientInitState init_state;
   WfdParams         *params;
@@ -51,28 +50,6 @@ static const gchar * supported_rtsp_features[] = {
   NULL
 };
 
-void
-idle_handler_destroy (gpointer user_data)
-{
-  WfdClient *self = WFD_CLIENT (user_data);
-
-  self->idle_source_id = 0;
-}
-
-static void
-register_idle_handler (WfdClient *self, GSourceFunc callback)
-{
-  if (self->idle_source_id)
-    {
-      g_warning ("WfdClient: Already have one idle handler scheduled, removing it");
-      g_source_remove (self->idle_source_id);
-    }
-  self->idle_source_id = g_idle_add_full (G_PRIORITY_DEFAULT,
-                                            callback,
-                                            self,
-                                            idle_handler_destroy);
-}
-
 WfdClient *
 wfd_client_new (void)
 {
@@ -89,10 +66,6 @@ wfd_client_finalize (GObject *object)
   if (self->keep_alive_source_id)
     g_source_remove (self->keep_alive_source_id);
   self->keep_alive_source_id = 0;
-
-  if (self->idle_source_id)
-    g_source_remove (self->idle_source_id);
-  self->idle_source_id = 0;
 
   G_OBJECT_CLASS (wfd_client_parent_class)->finalize (object);
 }
@@ -244,9 +217,10 @@ wfd_client_configure_client_media (GstRTSPClient * client,
 }
 
 static gboolean
-wfd_client_trigger_setup_idle (gpointer user_data)
+wfd_client_idle_trigger_setup (gpointer user_data)
 {
   wfd_client_trigger_method (WFD_CLIENT (user_data), "SETUP");
+  g_object_unref (user_data);
 
   return G_SOURCE_REMOVE;
 }
@@ -309,6 +283,7 @@ static gboolean
 wfd_client_idle_set_params (gpointer user_data)
 {
   wfd_client_set_params (WFD_CLIENT (user_data));
+  g_object_unref (user_data);
 
   return G_SOURCE_REMOVE;
 }
@@ -337,12 +312,12 @@ wfd_client_handle_response (GstRTSPClient * client, GstRTSPContext *ctx)
       /* XXX: Pick the better profile if we have an encoder that supports it! */
       wfd_client_select_codec_and_resolution (self, WFD_H264_PROFILE_BASE);
 
-      register_idle_handler (self, wfd_client_idle_set_params);
+      g_idle_add (wfd_client_idle_set_params, g_object_ref (self));
       break;
 
     case INIT_STATE_M4_SOURCE_SET_PARAMS:
       g_debug ("WfdClient: SET_PARAMS done");
-      register_idle_handler (self, wfd_client_trigger_setup_idle);
+      g_idle_add (wfd_client_idle_trigger_setup, g_object_ref (self));
       break;
 
     case INIT_STATE_M5_SOURCE_TRIGGER_SETUP:
@@ -426,8 +401,6 @@ wfd_client_idle_wfd_query_params (gpointer user_data)
 {
   WfdClient *self = WFD_CLIENT (user_data);
   GstRTSPMessage msg = { 0 };
-
-  g_autoptr(WfdClient) client = WFD_CLIENT (user_data);
   g_autofree gchar * query_params = NULL;
 
   g_debug ("WFD query params");
@@ -439,9 +412,10 @@ wfd_client_idle_wfd_query_params (gpointer user_data)
   query_params = wfd_params_m3_query_params (self->params);
   gst_rtsp_message_set_body (&msg, (guint8 *) query_params, strlen (query_params));
 
-  gst_rtsp_client_send_message (GST_RTSP_CLIENT (client), NULL, &msg);
+  gst_rtsp_client_send_message (GST_RTSP_CLIENT (self), NULL, &msg);
 
   gst_rtsp_message_unset (&msg);
+  g_object_unref (user_data);
 
   return G_SOURCE_REMOVE;
 }
@@ -468,9 +442,9 @@ wfd_client_send_message (GstRTSPClient *client, GstRTSPContext *ctx, GstRTSPMess
 {
   gchar *hdr = NULL;
 
-  /* Hook for sending a message. /*
+  /* Hook for sending a message. */
 
-     /* Modify the "Public" header to advertise support for WFD 1.0 */
+  /* Modify the "Public" header to advertise support for WFD 1.0 */
   gst_rtsp_message_get_header (msg, GST_RTSP_HDR_PUBLIC, &hdr, 0);
   if (hdr)
     {
