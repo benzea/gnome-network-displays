@@ -256,7 +256,7 @@ wfd_params_from_sink (WfdParams *self, const guint8 *body, gsize body_size)
           guint length;
           g_auto(GStrv) split_value = NULL;
 
-          g_clear_pointer (&self->edid, g_byte_array_free);
+          g_clear_pointer (&self->edid, g_byte_array_unref);
 
           if (g_str_equal (value, "none"))
             continue;
