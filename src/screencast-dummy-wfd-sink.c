@@ -29,7 +29,6 @@ struct _ScreencastDummyWFDSink
 
   GCancellable       *cancellable;
 
-  ScreencastPortal   *portal;
   WfdServer          *server;
 };
 
@@ -47,7 +46,7 @@ enum {
 };
 
 static void screencast_dummy_wfd_sink_sink_iface_init (ScreencastSinkIface *iface);
-static ScreencastSink * screencast_dummy_wfd_sink_sink_start_stream (ScreencastSink *sink, ScreencastPortal *portal);
+static ScreencastSink * screencast_dummy_wfd_sink_sink_start_stream (ScreencastSink *sink);
 
 G_DEFINE_TYPE_EXTENDED (ScreencastDummyWFDSink, screencast_dummy_wfd_sink, G_TYPE_OBJECT, 0,
                         G_IMPLEMENT_INTERFACE (SCREENCAST_TYPE_SINK,
@@ -102,7 +101,6 @@ screencast_dummy_wfd_sink_finalize (GObject *object)
   g_cancellable_cancel (sink->cancellable);
   g_clear_object (&sink->cancellable);
 
-  g_clear_object (&sink->portal);
   g_clear_object (&sink->server);
 
   G_OBJECT_CLASS (screencast_dummy_wfd_sink_parent_class)->finalize (object);
@@ -176,7 +174,7 @@ server_create_source_cb (ScreencastDummyWFDSink *sink, WfdServer *server)
 }
 
 static ScreencastSink *
-screencast_dummy_wfd_sink_sink_start_stream (ScreencastSink *sink, ScreencastPortal *portal)
+screencast_dummy_wfd_sink_sink_start_stream (ScreencastSink *sink)
 {
   ScreencastDummyWFDSink *self = SCREENCAST_DUMMY_WFD_SINK (sink);
 

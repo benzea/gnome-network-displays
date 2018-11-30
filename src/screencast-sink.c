@@ -18,6 +18,7 @@
 
 #include "gnome-screencast-config.h"
 #include "screencast-sink.h"
+#include <gst/gst.h>
 
 typedef ScreencastSinkIface ScreencastSinkInterface;
 G_DEFINE_INTERFACE (ScreencastSink, screencast_sink, G_TYPE_OBJECT);
@@ -68,21 +69,18 @@ screencast_sink_default_init (ScreencastSinkIface *iface)
 /**
  * screencast_sink_start_stream
  * @sink: the #ScreencastSink
- * @portal: the #ScreencastPortal
  *
  * Start streaming to this sink. The returned sink is the one
  * that is actually streaming, and may differ from the one this
  * is called on (i.e. if this is a MetaSink grouping multiple sinks).
  *
- * The portal will be used to create the GStreamer source element.
- *
  * Returns: (transfer full):
  *   The streaming sink owned by the caller.
  */
 ScreencastSink *
-screencast_sink_start_stream (ScreencastSink *sink, ScreencastPortal *portal)
+screencast_sink_start_stream (ScreencastSink *sink)
 {
   ScreencastSinkIface *iface = SCREENCAST_SINK_GET_IFACE (sink);
 
-  return iface->start_stream (sink, portal);
+  return iface->start_stream (sink);
 }

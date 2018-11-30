@@ -20,7 +20,6 @@
 
 #include <glib-object.h>
 #include "screencast-enum-types.h"
-#include "screencast-portal.h"
 
 G_BEGIN_DECLS
 
@@ -47,12 +46,12 @@ struct _ScreencastSinkIface
   GTypeInterface g_iface;
 
   /*< public >*/
-  ScreencastSink * (* start_stream) (ScreencastSink *sink, ScreencastPortal *portal);
+  ScreencastSink * (* start_stream) (ScreencastSink *sink);
 };
 
 GType screencast_sink_get_type (void) G_GNUC_CONST;
 
-ScreencastSink *screencast_sink_start_stream (ScreencastSink *sink, ScreencastPortal *portal);
+ScreencastSink *screencast_sink_start_stream (ScreencastSink *sink);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (ScreencastSink, g_object_unref)
 

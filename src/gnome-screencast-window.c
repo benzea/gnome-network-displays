@@ -24,7 +24,11 @@
 #include "screencast-wfd-p2p-registry.h"
 #include "screencast-dummy-provider.h"
 
+#include <gst/gst.h>
+
+#if HAVE_SCREENCAST_PORTAL
 #include "screencast-portal.h"
+#endif
 
 struct _GnomeScreencastWindow
 {
@@ -33,7 +37,9 @@ struct _GnomeScreencastWindow
   ScreencastMetaProvider   *meta_provider;
   ScreencastWFDP2PRegistry *wfd_p2p_registry;
 
+#if HAVE_SCREENCAST_PORTAL
   ScreencastPortal *portal;
+#endif
 
   GCancellable    *cancellable;
 
@@ -51,7 +57,11 @@ sink_create_source_cb (GnomeScreencastWindow *self, ScreencastSink *sink)
   GstElement *src, *dst, *res;
 
   bin = GST_BIN (gst_bin_new ("screencast source bin"));
+#if HAVE_SCREENCAST_PORTAL
   src = screencast_portal_get_source (self->portal);
+#else
+  src = gst_element_factory_make ("ximagesrc", "X11 screencast source");
+#endif
   gst_bin_add (bin, src);
 
   dst = gst_element_factory_make ("intervideosink", "inter video sink");
@@ -85,16 +95,18 @@ find_sink_list_row_activated_cb (GnomeScreencastWindow *self, ScreencastSinkRow 
   ScreencastSink *sink;
   g_autoptr(ScreencastSink) streaming_sink = NULL;
 
+#if HAVE_SCREENCAST_PORTAL
   if (!self->portal)
     {
       g_warning ("Cannot start streaming right now as we don't have a portal!");
       return;
     }
+#endif
 
   g_assert (SCREENCAST_IS_SINK_ROW (row));
 
   sink = screencast_sink_row_get_sink (row);
-  streaming_sink = screencast_sink_start_stream (sink, self->portal);
+  streaming_sink = screencast_sink_start_stream (sink);
 
   if (streaming_sink)
     {
@@ -136,6 +148,7 @@ gnome_screencast_window_class_init (GnomeScreencastWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GnomeScreencastWindow, find_sink_list);
 }
 
+#if HAVE_SCREENCAST_PORTAL
 static void
 screencast_portal_init_async_cb (GObject *source_object,
                                  GAsyncResult *res,
@@ -155,18 +168,21 @@ screencast_portal_init_async_cb (GObject *source_object,
           gtk_widget_destroy (GTK_WIDGET (window));
         }
 
+      g_object_unref (source_object);
       return;
     }
 
   window = GNOME_SCREENCAST_WINDOW (user_data);
   window->portal = SCREENCAST_PORTAL (source_object);
 }
+#endif
 
 static void
 gnome_screencast_window_init (GnomeScreencastWindow *self)
 {
+#if HAVE_SCREENCAST_PORTAL
   ScreencastPortal *portal;
-
+#endif
   gtk_widget_init_template (GTK_WIDGET (self));
 
   self->meta_provider = screencast_meta_provider_new ();
@@ -190,10 +206,12 @@ gnome_screencast_window_init (GnomeScreencastWindow *self)
 
   self->cancellable = g_cancellable_new ();
 
+#if HAVE_SCREENCAST_PORTAL
   portal = screencast_portal_new ();
   g_async_initable_init_async (G_ASYNC_INITABLE (portal),
                                G_PRIORITY_LOW,
                                self->cancellable,
                                screencast_portal_init_async_cb,
                                self);
+#endif
 }

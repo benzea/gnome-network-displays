@@ -33,7 +33,6 @@ struct _ScreencastWFDP2PSink
   NMDevice           *nm_device;
   NMP2PPeer          *nm_peer;
 
-  ScreencastPortal   *portal;
   WfdServer          *server;
 };
 
@@ -51,7 +50,7 @@ enum {
 };
 
 static void screencast_wfd_p2p_sink_sink_iface_init (ScreencastSinkIface *iface);
-static ScreencastSink * screencast_wfd_p2p_sink_sink_start_stream (ScreencastSink *sink, ScreencastPortal *portal);
+static ScreencastSink * screencast_wfd_p2p_sink_sink_start_stream (ScreencastSink *sink);
 
 G_DEFINE_TYPE_EXTENDED (ScreencastWFDP2PSink, screencast_wfd_p2p_sink, G_TYPE_OBJECT, 0,
                         G_IMPLEMENT_INTERFACE (SCREENCAST_TYPE_SINK,
@@ -170,7 +169,6 @@ screencast_wfd_p2p_sink_finalize (GObject *object)
   g_clear_object (&sink->nm_device);
   g_clear_object (&sink->nm_peer);
 
-  g_clear_object (&sink->portal);
   g_clear_object (&sink->server);
 
   G_OBJECT_CLASS (screencast_wfd_p2p_sink_parent_class)->finalize (object);
@@ -324,7 +322,7 @@ p2p_connected (GObject      *source_object,
 }
 
 static ScreencastSink *
-screencast_wfd_p2p_sink_sink_start_stream (ScreencastSink *sink, ScreencastPortal *portal)
+screencast_wfd_p2p_sink_sink_start_stream (ScreencastSink *sink)
 {
   ScreencastWFDP2PSink *self = SCREENCAST_WFD_P2P_SINK (sink);
   GVariant *options = NULL;
@@ -332,7 +330,6 @@ screencast_wfd_p2p_sink_sink_start_stream (ScreencastSink *sink, ScreencastPorta
 
   g_return_val_if_fail (self->state == SCREENCAST_SINK_STATE_DISCONNECTED, NULL);
 
-  self->portal = g_object_ref (portal);
   self->state = SCREENCAST_SINK_STATE_WAIT_P2P;
   g_object_notify (G_OBJECT (self), "state");
 
