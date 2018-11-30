@@ -22,6 +22,7 @@
 #include "screencast-sink-row.h"
 #include "screencast-meta-provider.h"
 #include "screencast-wfd-p2p-registry.h"
+#include "screencast-dummy-provider.h"
 
 #include "screencast-portal.h"
 
@@ -142,6 +143,15 @@ gnome_screencast_window_init (GnomeScreencastWindow *self)
   self->meta_provider = screencast_meta_provider_new ();
   self->wfd_p2p_registry = screencast_wfd_p2p_registry_new (self->meta_provider);
   screencast_sink_list_set_provider (self->find_sink_list, SCREENCAST_PROVIDER (self->meta_provider));
+
+  if (g_strcmp0 (g_getenv ("SCREENCAST_DUMMY"), "1") == 0)
+    {
+      g_autoptr(ScreencastDummyProvider) dummy_provider = NULL;
+
+      g_debug ("Adding dummy provider");
+      dummy_provider = screencast_dummy_provider_new ();
+      screencast_meta_provider_add_provider (self->meta_provider, SCREENCAST_PROVIDER (dummy_provider));
+    }
 
   g_signal_connect_object (self->find_sink_list,
                            "row-activated",
