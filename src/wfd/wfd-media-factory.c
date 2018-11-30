@@ -442,6 +442,16 @@ static void
 wfd_media_factory_init (WfdMediaFactory *self)
 {
   GstRTSPMediaFactory *media_factory = GST_RTSP_MEDIA_FACTORY (self);
+  g_autoptr(GstElementFactory) x264enc_factory = NULL;
+
+  /* Default to openh264 and assume it is usable, prefer x264enc when available. */
+  self->encoder = ENCODER_OPENH264;
+  x264enc_factory = gst_element_factory_find ("x264enc");
+  if (x264enc_factory)
+    {
+      g_debug ("Using x264enc for video encoding.");
+      self->encoder = ENCODER_X264;
+    }
 
   gst_rtsp_media_factory_set_media_gtype (media_factory, WFD_TYPE_MEDIA);
 }
