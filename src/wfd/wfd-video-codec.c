@@ -95,7 +95,7 @@ resolution_table_lookup (gint table, guint offset)
   else if (table == RESOLUTION_TABLE_VESA)
     {
       resolutions = vesa_resolutions;
-      length = G_N_ELEMENTS (hh_resolutions);
+      length = G_N_ELEMENTS (vesa_resolutions);
     }
   else
     {
@@ -357,6 +357,7 @@ wfd_video_codec_get_max_bitrate_kbit (WfdVideoCodec *self)
 GList *
 wfd_video_codec_get_resolutions (WfdVideoCodec *self)
 {
+  WfdResolution *resolution;
   g_autoptr(GList) res = NULL;
   guint32 bits, i;
 
@@ -364,7 +365,13 @@ wfd_video_codec_get_resolutions (WfdVideoCodec *self)
   for (bits = self->hh_sup; bits; bits = bits >> 1)
     {
       if (bits & 0x1)
-        res = g_list_append (res, (gpointer) resolution_table_lookup (RESOLUTION_TABLE_HH, i));
+        {
+          resolution = (gpointer) resolution_table_lookup (RESOLUTION_TABLE_HH, i);
+          if (resolution)
+            res = g_list_append (res, resolution);
+          else
+            g_warning ("Resolution %d not found in table HH, but was in suppliments 0x%X\n", i, self->hh_sup);
+        }
       i++;
     }
 
@@ -372,7 +379,13 @@ wfd_video_codec_get_resolutions (WfdVideoCodec *self)
   for (bits = self->cea_sup; bits; bits = bits >> 1)
     {
       if (bits & 0x1)
-        res = g_list_append (res, (gpointer) resolution_table_lookup (RESOLUTION_TABLE_CEA, i));
+        {
+          resolution = (gpointer) resolution_table_lookup (RESOLUTION_TABLE_CEA, i);
+          if (resolution)
+            res = g_list_append (res, resolution);
+          else
+            g_warning ("Resolution %d not found in table CAE, but was in suppliments 0x%X\n", i, self->cea_sup);
+        }
       i++;
     }
 
@@ -380,7 +393,13 @@ wfd_video_codec_get_resolutions (WfdVideoCodec *self)
   for (bits = self->vesa_sup; bits; bits = bits >> 1)
     {
       if (bits & 0x1)
-        res = g_list_append (res, (gpointer) resolution_table_lookup (RESOLUTION_TABLE_VESA, i));
+        {
+          resolution = (gpointer) resolution_table_lookup (RESOLUTION_TABLE_VESA, i);
+          if (resolution)
+            res = g_list_append (res, resolution);
+          else
+            g_warning ("Resolution %d not found in table VESA, but was in suppliments 0x%X\n", i, self->vesa_sup);
+        }
       i++;
     }
 
