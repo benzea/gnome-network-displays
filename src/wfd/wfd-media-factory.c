@@ -215,46 +215,59 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
 }
 
 static gboolean
-my_bus_callback (GstBus     *bus,
+pipeline_bus_watch_cb (GstBus     *bus,
          GstMessage *message,
          gpointer    data)
 {
-  g_print ("Got %s message\n", GST_MESSAGE_TYPE_NAME (message));
-
   switch (GST_MESSAGE_TYPE (message)) {
-    case GST_MESSAGE_STREAM_STATUS: {
-      GstStreamStatusType status;
-      GstElement *element = NULL;
-
-      gst_message_parse_stream_status (message, &status, &element);
-      g_debug ("Element %s stream status is now %s", gst_element_get_name (element), g_enum_to_string (GST_TYPE_STREAM_STATUS_TYPE, status));
-      break;
-    }
     case GST_MESSAGE_ERROR: {
       GError *err;
       gchar *debug;
 
       gst_message_parse_error (message, &err, &debug);
-      g_print ("Error: %s\n", err->message);
+      g_print ("Error from %s: %s\n", GST_MESSAGE_SRC_NAME (message), err->message);
       g_error_free (err);
       g_free (debug);
 
       break;
     }
+    case GST_MESSAGE_WARNING: {
+      GError *err;
+      gchar *debug;
+
+      gst_message_parse_warning (message, &err, &debug);
+      g_print ("Warning from %s: %s\n", GST_MESSAGE_SRC_NAME (message), err->message);
+      g_error_free (err);
+      g_free (debug);
+
+      break;
+    }
+    case GST_MESSAGE_QOS: {
+      gboolean live;
+      guint64 running_time, stream_time, timestamp, duration;
+      guint64 processed, dropped;
+      gint64 jitter;
+      gdouble proportion;
+      gint quality;
+
+      gst_message_parse_qos (message, &live, &running_time, &stream_time, &timestamp, &duration);
+      gst_message_parse_qos_stats (message, NULL, &processed, &dropped);
+      gst_message_parse_qos_values (message, &jitter, &proportion, &quality);
+
+      g_debug ("QOS: proportion: %.3f, processed: %" G_GUINT64_FORMAT ", dropped: %" G_GUINT64_FORMAT "",
+               proportion, processed, dropped);
+      break;
+    }
     case GST_MESSAGE_EOS:
       /* end-of-stream */
-      g_print ("reached EOS");
+      g_debug ("reached EOS");
       break;
     default:
       /* unhandled message */
       break;
   }
 
-  /* we want to be notified again the next time there is a message
-   * on the bus, so returning TRUE (FALSE means we want to stop watching
-   * for messages on the bus and our callback should not be called again)
-   */
-  return G_SOURCE_CONTINUE;
+  return TRUE;
 }
 
 static GstElement*
@@ -266,7 +279,7 @@ wfd_media_factory_create_pipeline (GstRTSPMediaFactory *factory, GstRTSPMedia *m
   pipeline = GST_RTSP_MEDIA_FACTORY_CLASS (wfd_media_factory_parent_class)->create_pipeline (factory, media);
 
   bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
-  gst_bus_add_watch (bus, my_bus_callback, NULL);
+  gst_bus_add_watch (bus, pipeline_bus_watch_cb, NULL);
 
   return pipeline;
 }
