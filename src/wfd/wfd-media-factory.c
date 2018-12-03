@@ -43,7 +43,10 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
   GstElement *scale;
   GstElement *sizefilter;
   GstElement *convert;
+  GstElement *tee_interlace;
   GstElement *interlace;
+  GstElement *selector_interlace;
+  GstElement *queue_pre_encoder;
   GstElement *encoder;
   GstElement *parse;
   GstElement *codecfilter;
@@ -77,12 +80,29 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
   convert = gst_element_factory_make ("videoconvert", "wfd-videoconvert");
   success &= gst_bin_add (bin, convert);
 
+  tee_interlace = gst_element_factory_make ("tee", "wfd-tee-interlace");
+  success &= gst_bin_add (bin, tee_interlace);
 
   interlace = gst_element_factory_make ("interlace", "wfd-interlace");
   success &= gst_bin_add (bin, interlace);
   /* 1:1 is 0, so convert 60 -> 60i */
-  g_object_set (interlace, "field-pattern", 0, NULL);
+  g_object_set (interlace,
+                "field-pattern", 0,
+                NULL);
 
+  selector_interlace = gst_element_factory_make ("input-selector", "wfd-selector-interlace");
+  /* No need to sync the streams. */
+  g_object_set (selector_interlace,
+                "sync-streams", FALSE,
+                NULL);
+  success &= gst_bin_add (bin, selector_interlace);
+
+  queue_pre_encoder = gst_element_factory_make ("queue", "wfd-pre-encoder-queue");
+  g_object_set (queue_pre_encoder,
+                "max-size-buffers", (guint) 1,
+                "leaky", 0,
+                NULL);
+  success &= gst_bin_add (bin, queue_pre_encoder);
 
   switch (self->encoder)
     {
@@ -162,11 +182,19 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
                                     scale,
                                     sizefilter,
                                     convert,
-                                    interlace,
+                                    tee_interlace,
+                                    selector_interlace,
+                                    queue_pre_encoder,
                                     encoder,
                                     parse,
                                     codecfilter,
                                     NULL);
+
+  success &= gst_element_link_many (tee_interlace,
+                                    interlace,
+                                    selector_interlace,
+                                    NULL);
+
   /* The WFD specification says we should use stream ID 0x1011. */
   success &= gst_element_link_pads (codecfilter, "src", mpegmux, "sink_4113");
   success &= gst_element_link_many (mpegmux,
@@ -249,8 +277,8 @@ wfd_configure_media_element (GstBin *bin, WfdVideoCodec *codec, WfdResolution *r
   g_autoptr(GstCaps) caps = NULL;
   g_autoptr(GstElement) sizefilter = NULL;
   g_autoptr(GstElement) encoder = NULL;
-  g_autoptr(GstElement) interlace = NULL;
-  g_autoptr(GstElement) convert = NULL;
+  g_autoptr(GstElement) selector_interlace = NULL;
+  g_autoptr(GstPad) selector_interlace_pad = NULL;
   WfdH264Encoder encoder_impl;
 
   caps = gst_caps_new_simple ("video/x-raw",
@@ -304,16 +332,11 @@ wfd_configure_media_element (GstBin *bin, WfdVideoCodec *codec, WfdResolution *r
     }
 
   /* Unlink the interlacer */
-  convert = gst_bin_get_by_name (bin, "wfd-videoconvert");
-  interlace = gst_bin_get_by_name (bin, "wfd-interlace");
-  gst_element_unlink (convert, interlace);
-  gst_element_unlink (convert, encoder);
-  gst_element_unlink (interlace, encoder);
-
-  if (resolution->interlaced)
-    gst_element_link_many (convert, interlace, encoder, NULL);
-  else
-    gst_element_link_many (convert, encoder, NULL);
+  selector_interlace = gst_bin_get_by_name (bin, "wfd-selector-interlace");
+  selector_interlace_pad = gst_element_get_static_pad (selector_interlace, resolution->interlaced ? "sink_1" : "sink_0");
+  g_object_set (selector_interlace,
+                "active-pad", selector_interlace_pad,
+                NULL);
 
   GST_DEBUG_BIN_TO_DOT_FILE (bin,
                              GST_DEBUG_GRAPH_SHOW_ALL,
