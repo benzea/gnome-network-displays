@@ -124,7 +124,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
   parse = gst_element_factory_make ("h264parse", "wfd-h264parse");
   success &= gst_bin_add (bin, parse);
   g_object_set (parse,
-                "config-interval", -1,
+                "config-interval", (gint) -1,
                 NULL);
 
   caps = gst_caps_from_string ("video/x-h264,alignment=nal,stream-format=byte-stream");
@@ -137,13 +137,16 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
   mpegmux = gst_element_factory_make ("mpegtsmux", "wfd-mpegtsmux");
   success &= gst_bin_add (bin, mpegmux);
   g_object_set (mpegmux,
-                "alignment", 7, /* Force the correct alignment for UDP */
+                "alignment", (gint) 7, /* Force the correct alignment for UDP */
                 NULL);
 
 
   queue_pre_payloader = gst_element_factory_make ("queue", "wfd-pre-payloader-queue");
   success &= gst_bin_add (bin, queue_pre_payloader);
-  /* Set lower limits for queue? */
+  g_object_set (queue_pre_payloader,
+                "max-size-buffers", (guint) 1,
+                "leaky", 0,
+                NULL);
 
   payloader = gst_element_factory_make ("rtpmp2tpay", "pay0");
   success &= gst_bin_add (bin, payloader);

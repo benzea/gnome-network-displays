@@ -67,6 +67,7 @@ sink_create_source_cb (GnomeScreencastWindow *self, ScreencastSink *sink)
   dst = gst_element_factory_make ("intervideosink", "inter video sink");
   g_object_set (dst,
                 "channel", "screencast-inter-video",
+                "max-lateness", (gint64) -1,
                 NULL);
   gst_bin_add (bin, dst);
 
@@ -75,7 +76,7 @@ sink_create_source_cb (GnomeScreencastWindow *self, ScreencastSink *sink)
   res = gst_element_factory_make ("intervideosrc", "screencastsrc");
   g_object_set (res,
                 "do-timestamp", TRUE,
-                "timeout", 10000000000,
+                "timeout", (guint64) 10000000000,
                 "channel", "screencast-inter-video",
                 NULL);
 
@@ -84,7 +85,7 @@ sink_create_source_cb (GnomeScreencastWindow *self, ScreencastSink *sink)
   gst_element_add_pad (GST_ELEMENT (bin),
                        gst_ghost_pad_new ("src",
                                           gst_element_get_static_pad (res,
-                                          "src")));
+                                                                      "src")));
 
   return GST_ELEMENT (bin);
 }
