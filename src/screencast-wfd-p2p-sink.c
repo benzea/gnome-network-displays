@@ -32,8 +32,10 @@ struct _ScreencastWFDP2PSink
   NMClient           *nm_client;
   NMDevice           *nm_device;
   NMP2PPeer          *nm_peer;
+  NMActiveConnection *nm_ac;
 
   WfdServer          *server;
+  guint               server_source_id;
 };
 
 enum {
@@ -51,6 +53,10 @@ enum {
 
 static void screencast_wfd_p2p_sink_sink_iface_init (ScreencastSinkIface *iface);
 static ScreencastSink * screencast_wfd_p2p_sink_sink_start_stream (ScreencastSink *sink);
+static void screencast_wfd_p2p_sink_sink_stop_stream (ScreencastSink *sink);
+
+static void screencast_wfd_p2p_sink_sink_stop_stream_int (ScreencastWFDP2PSink *self);
+
 
 G_DEFINE_TYPE_EXTENDED (ScreencastWFDP2PSink, screencast_wfd_p2p_sink, G_TYPE_OBJECT, 0,
                         G_IMPLEMENT_INTERFACE (SCREENCAST_TYPE_SINK,
@@ -61,12 +67,30 @@ static GParamSpec * props[PROP_LAST] = { NULL, };
 
 
 static void
-peer_notify_cb (ScreencastWFDP2PSink *sink, GParamSpec *pspec, NMP2PPeer *peer)
+peer_notify_cb (ScreencastWFDP2PSink *self, GParamSpec *pspec, NMP2PPeer *peer)
 {
   /* TODO: Assumes the display name may have changed.
    *       This is obviously overly agressive, on the other hand
    *       not really an issue. */
-  g_object_notify (G_OBJECT (sink), "display-name");
+  g_object_notify (G_OBJECT (self), "display-name");
+}
+
+static void
+notify_active_connection_cb (ScreencastWFDP2PSink *self, GParamSpec *pspec, NMDevice *device)
+{
+  if (!self->nm_ac)
+    return;
+
+  /* Nothing to do if it is still the correct connection. */
+  if (self->nm_ac == nm_device_get_active_connection (device))
+    return;
+
+  /* Our active connection is not active anymore ... */
+  g_clear_object (&self->nm_ac);
+
+  screencast_wfd_p2p_sink_sink_stop_stream_int (self);
+  self->state = SCREENCAST_SINK_STATE_ERROR;
+  g_object_notify (G_OBJECT (self), "state");
 }
 
 static void
@@ -133,6 +157,12 @@ screencast_wfd_p2p_sink_set_property (GObject      *object,
     case PROP_CLIENT:
       g_assert (sink->nm_client == NULL);
       sink->nm_client = g_value_dup_object (value);
+
+      g_signal_connect_object (sink->nm_client,
+                               "notify::" NM_DEVICE_ACTIVE_CONNECTION,
+                               (GCallback) notify_active_connection_cb,
+                               sink,
+                               G_CONNECT_SWAPPED);
       break;
 
     case PROP_DEVICE:
@@ -165,11 +195,11 @@ screencast_wfd_p2p_sink_finalize (GObject *object)
   g_cancellable_cancel (sink->cancellable);
   g_clear_object (&sink->cancellable);
 
+  screencast_wfd_p2p_sink_sink_stop_stream_int (sink);
+
   g_clear_object (&sink->nm_client);
   g_clear_object (&sink->nm_device);
   g_clear_object (&sink->nm_peer);
-
-  g_clear_object (&sink->server);
 
   G_OBJECT_CLASS (screencast_wfd_p2p_sink_parent_class)->finalize (object);
 }
@@ -224,6 +254,7 @@ static void
 screencast_wfd_p2p_sink_sink_iface_init (ScreencastSinkIface *iface)
 {
   iface->start_stream = screencast_wfd_p2p_sink_sink_start_stream;
+  iface->stop_stream = screencast_wfd_p2p_sink_sink_stop_stream;
 }
 
 static void
@@ -233,6 +264,13 @@ play_request_cb (ScreencastWFDP2PSink *sink, GstRTSPContext *ctx, WfdClient *cli
 
   sink->state = SCREENCAST_SINK_STATE_STREAMING;
   g_object_notify (G_OBJECT (sink), "state");
+}
+
+static void
+closed_cb (ScreencastWFDP2PSink *sink, WfdClient *client)
+{
+  /* Connection was closed, do a clean shutdown*/
+  screencast_wfd_p2p_sink_sink_stop_stream (SCREENCAST_SINK (sink));
 }
 
 static void
@@ -248,6 +286,12 @@ client_connected_cb (ScreencastWFDP2PSink *sink, WfdClient *client, WfdServer *s
   g_signal_connect_object (client,
                            "play-request",
                            (GCallback) play_request_cb,
+                           sink,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (client,
+                           "closed",
+                           (GCallback) closed_cb,
                            sink,
                            G_CONNECT_SWAPPED);
 }
@@ -268,12 +312,13 @@ p2p_connected (GObject      *source_object,
                gpointer      user_data)
 {
   ScreencastWFDP2PSink *sink = NULL;
-
+  NMActiveConnection *ac = NULL;
   g_autoptr(GError) error = NULL;
 
   g_debug ("ScreencastWfdP2PSink: Got P2P connection");
 
-  if (!nm_client_add_and_activate_connection_options_finish (NM_CLIENT (source_object), res, &error))
+  ac = nm_client_add_and_activate_connection_options_finish (NM_CLIENT (source_object), res, &error);
+  if (!ac)
     {
       /* Operation was aborted */
       if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
@@ -287,21 +332,20 @@ p2p_connected (GObject      *source_object,
     }
 
   sink = SCREENCAST_WFD_P2P_SINK (user_data);
+  sink->nm_ac = ac;
 
-  if (sink->server)
-    g_signal_handlers_disconnect_by_data (sink->server, sink);
-  g_clear_object (&sink->server);
-
+  g_assert (sink->server == NULL);
   sink->server = wfd_server_new ();
   /*
-     XXX: Not yet implemented, but we should only bind on the P2P device
-     wfd_server_set_interface (GST_RTSP_SERVER (sink->server), nm_device_get_ip_iface (sink->nm_device));
+   * XXX: Not yet implemented, but we should only bind on the P2P device
+   * wfd_server_set_interface (GST_RTSP_SERVER (sink->server), nm_device_get_ip_iface (sink->nm_device));
    */
   if (gst_rtsp_server_attach (GST_RTSP_SERVER (sink->server), NULL) < 0)
     {
+      screencast_wfd_p2p_sink_sink_stop_stream_int (sink);
+
       sink->state = SCREENCAST_SINK_STATE_ERROR;
       g_object_notify (G_OBJECT (sink), "state");
-      g_clear_object (&sink->server);
       return;
     }
 
@@ -349,6 +393,51 @@ screencast_wfd_p2p_sink_sink_start_stream (ScreencastSink *sink)
                                                  sink);
 
   return g_object_ref (sink);
+}
+
+static void
+screencast_wfd_p2p_sink_sink_stop_stream_int (ScreencastWFDP2PSink *self)
+{
+  g_cancellable_cancel (self->cancellable);
+  g_clear_object (&self->cancellable);
+
+  self->cancellable = g_cancellable_new ();
+
+  /* Destroy the server that is streaming. */
+  if (self->server_source_id)
+    {
+      g_source_remove (self->server_source_id);
+      self->server_source_id = 0;
+    }
+
+  /* Needs to protect against recursion. */
+  if (self->server)
+    {
+      g_autoptr(WfdServer) server = NULL;
+
+      server = g_steal_pointer (&self->server);
+      g_signal_handlers_disconnect_by_data (server, self);
+      wfd_server_purge (server);
+    }
+
+  /* And disconnect our active connection.
+   * nm_ac will be unset if something else destroyed the connection already */
+  if (self->nm_ac)
+    {
+      nm_device_disconnect (self->nm_device, NULL, NULL);
+      g_clear_object (&self->nm_ac);
+    }
+}
+
+static void
+screencast_wfd_p2p_sink_sink_stop_stream (ScreencastSink *sink)
+{
+  ScreencastWFDP2PSink *self = SCREENCAST_WFD_P2P_SINK (sink);
+
+  screencast_wfd_p2p_sink_sink_stop_stream_int (self);
+
+  self->state = SCREENCAST_SINK_STATE_DISCONNECTED;
+  g_object_notify (G_OBJECT (self), "state");
 }
 
 /******************************************************************

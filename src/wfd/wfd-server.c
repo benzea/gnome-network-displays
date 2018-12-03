@@ -38,6 +38,8 @@ wfd_server_finalize (GObject *object)
 {
   WfdServer *self = (WfdServer *) object;
 
+  g_debug ("WfdServer: Finalize");
+
   g_source_remove (self->clean_pool_source_id);
   self->clean_pool_source_id = 0;
 
@@ -200,3 +202,32 @@ wfd_server_init (WfdServer *self)
   gst_rtsp_server_set_address (GST_RTSP_SERVER (self), "0.0.0.0");
   gst_rtsp_server_set_service (GST_RTSP_SERVER (self), "7236");
 }
+
+static GstRTSPFilterResult
+pool_filter_remove_cb (GstRTSPSessionPool *pool,
+                       GstRTSPSession *session,
+                       gpointer user_data)
+{
+  return GST_RTSP_FILTER_REMOVE;
+}
+
+static GstRTSPFilterResult
+client_filter_remove_cb (GstRTSPServer *server,
+                         GstRTSPClient *client,
+                         gpointer user_data)
+{
+  return GST_RTSP_FILTER_REMOVE;
+}
+
+void
+wfd_server_purge (WfdServer *self)
+{
+  GstRTSPServer *server = GST_RTSP_SERVER (self);
+  GstRTSPSessionPool *session_pool;
+
+  session_pool = gst_rtsp_server_get_session_pool (server);
+  gst_rtsp_session_pool_filter (session_pool, pool_filter_remove_cb, NULL);
+
+  gst_rtsp_server_client_filter (server, client_filter_remove_cb, NULL);
+}
+

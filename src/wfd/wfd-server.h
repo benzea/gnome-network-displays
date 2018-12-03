@@ -9,5 +9,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (WfdServer, wfd_server, WFD, SERVER, GstRTSPServer)
 
 WfdServer * wfd_server_new (void);
+void wfd_server_purge (WfdServer *self);
 
 G_END_DECLS

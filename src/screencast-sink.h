@@ -47,11 +47,13 @@ struct _ScreencastSinkIface
 
   /*< public >*/
   ScreencastSink * (* start_stream) (ScreencastSink *sink);
+  void             (* stop_stream)  (ScreencastSink *sink);
 };
 
 GType screencast_sink_get_type (void) G_GNUC_CONST;
 
 ScreencastSink *screencast_sink_start_stream (ScreencastSink *sink);
+void            screencast_sink_stop_stream (ScreencastSink *sink);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (ScreencastSink, g_object_unref)
 

@@ -84,3 +84,17 @@ screencast_sink_start_stream (ScreencastSink *sink)
 
   return iface->start_stream (sink);
 }
+
+/**
+ * screencast_sink_stop_stream
+ * @sink: the #ScreencastSink
+ *
+ * Stop any active streaming or connection attempt to this sink.
+ */
+void
+screencast_sink_stop_stream (ScreencastSink *sink)
+{
+  ScreencastSinkIface *iface = SCREENCAST_SINK_GET_IFACE (sink);
+
+  iface->stop_stream (sink);
+}

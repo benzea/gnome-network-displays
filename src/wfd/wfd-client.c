@@ -24,8 +24,6 @@ struct _WfdClient
 
   WfdClientInitState init_state;
   WfdParams         *params;
-
-  WfdMedia          *media;
 };
 
 G_DEFINE_TYPE (WfdClient, wfd_client, GST_TYPE_RTSP_CLIENT)
@@ -203,8 +201,6 @@ wfd_client_configure_client_media (GstRTSPClient * client,
 
   g_return_val_if_fail (self->params->selected_codec, FALSE);
   g_return_val_if_fail (self->params->selected_resolution, FALSE);
-
-  self->media = WFD_MEDIA (media);
 
   element = gst_rtsp_media_get_element (media);
   wfd_configure_media_element (GST_BIN (element), self->params->selected_codec, self->params->selected_resolution);

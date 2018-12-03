@@ -27,9 +27,8 @@ struct _ScreencastDummyWFDSink
 
   ScreencastSinkState state;
 
-  GCancellable       *cancellable;
-
   WfdServer          *server;
+  guint               server_source_id;
 };
 
 enum {
@@ -47,6 +46,7 @@ enum {
 
 static void screencast_dummy_wfd_sink_sink_iface_init (ScreencastSinkIface *iface);
 static ScreencastSink * screencast_dummy_wfd_sink_sink_start_stream (ScreencastSink *sink);
+static void screencast_dummy_wfd_sink_sink_stop_stream (ScreencastSink *sink);
 
 G_DEFINE_TYPE_EXTENDED (ScreencastDummyWFDSink, screencast_dummy_wfd_sink, G_TYPE_OBJECT, 0,
                         G_IMPLEMENT_INTERFACE (SCREENCAST_TYPE_SINK,
@@ -96,12 +96,7 @@ screencast_dummy_wfd_sink_get_property (GObject    *object,
 void
 screencast_dummy_wfd_sink_finalize (GObject *object)
 {
-  ScreencastDummyWFDSink *sink = SCREENCAST_DUMMY_WFD_SINK (object);
-
-  g_cancellable_cancel (sink->cancellable);
-  g_clear_object (&sink->cancellable);
-
-  g_clear_object (&sink->server);
+  screencast_dummy_wfd_sink_sink_stop_stream (SCREENCAST_SINK (object));
 
   G_OBJECT_CLASS (screencast_dummy_wfd_sink_parent_class)->finalize (object);
 }
@@ -124,7 +119,6 @@ static void
 screencast_dummy_wfd_sink_init (ScreencastDummyWFDSink *sink)
 {
   sink->state = SCREENCAST_SINK_STATE_DISCONNECTED;
-  sink->cancellable = g_cancellable_new ();
 }
 
 /******************************************************************
@@ -135,6 +129,7 @@ static void
 screencast_dummy_wfd_sink_sink_iface_init (ScreencastSinkIface *iface)
 {
   iface->start_stream = screencast_dummy_wfd_sink_sink_start_stream;
+  iface->stop_stream = screencast_dummy_wfd_sink_sink_stop_stream;
 }
 
 static void
@@ -144,6 +139,13 @@ play_request_cb (ScreencastDummyWFDSink *sink, GstRTSPContext *ctx, WfdClient *c
 
   sink->state = SCREENCAST_SINK_STATE_STREAMING;
   g_object_notify (G_OBJECT (sink), "state");
+}
+
+static void
+closed_cb (ScreencastDummyWFDSink *sink, WfdClient *client)
+{
+  /* Connection was closed, do a clean shutdown*/
+  screencast_dummy_wfd_sink_sink_stop_stream (SCREENCAST_SINK (sink));
 }
 
 static void
@@ -159,6 +161,12 @@ client_connected_cb (ScreencastDummyWFDSink *sink, WfdClient *client, WfdServer 
   g_signal_connect_object (client,
                            "play-request",
                            (GCallback) play_request_cb,
+                           sink,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (client,
+                           "closed",
+                           (GCallback) closed_cb,
                            sink,
                            G_CONNECT_SWAPPED);
 }
@@ -178,13 +186,14 @@ screencast_dummy_wfd_sink_sink_start_stream (ScreencastSink *sink)
 {
   ScreencastDummyWFDSink *self = SCREENCAST_DUMMY_WFD_SINK (sink);
 
-  if (self->server)
-    g_signal_handlers_disconnect_by_data (self->server, self);
-  g_clear_object (&self->server);
+  g_return_val_if_fail (self->state == SCREENCAST_SINK_STATE_DISCONNECTED, NULL);
+
+  g_assert (self->server == NULL);
 
   self->server = wfd_server_new ();
+  self->server_source_id = gst_rtsp_server_attach (GST_RTSP_SERVER (self->server), NULL);
 
-  if (gst_rtsp_server_attach (GST_RTSP_SERVER (self->server), NULL) < 0)
+  if (self->server_source_id < 0)
     {
       self->state = SCREENCAST_SINK_STATE_ERROR;
       g_object_notify (G_OBJECT (self), "state");
@@ -211,6 +220,31 @@ screencast_dummy_wfd_sink_sink_start_stream (ScreencastSink *sink)
   g_object_notify (G_OBJECT (self), "state");
 
   return g_object_ref (sink);
+}
+
+void
+screencast_dummy_wfd_sink_sink_stop_stream (ScreencastSink *sink)
+{
+  ScreencastDummyWFDSink *self = SCREENCAST_DUMMY_WFD_SINK (sink);
+
+  if (self->server_source_id)
+    {
+      g_source_remove (self->server_source_id);
+      self->server_source_id = 0;
+    }
+
+  /* Needs to protect against recursion. */
+  if (self->server)
+    {
+      g_autoptr(WfdServer) server = NULL;
+
+      server = g_steal_pointer (&self->server);
+      g_signal_handlers_disconnect_by_data (server, self);
+      wfd_server_purge (server);
+    }
+
+  self->state = SCREENCAST_SINK_STATE_DISCONNECTED;
+  g_object_notify (G_OBJECT (self), "state");
 }
 
 ScreencastDummyWFDSink *

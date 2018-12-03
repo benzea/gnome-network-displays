@@ -41,6 +41,7 @@ enum {
 
 static void screencast_meta_sink_sink_iface_init (ScreencastSinkIface *iface);
 static ScreencastSink * screencast_meta_sink_sink_start_stream (ScreencastSink *sink);
+static void screencast_meta_sink_sink_stop_stream (ScreencastSink *sink);
 
 G_DEFINE_TYPE_EXTENDED (ScreencastMetaSink, screencast_meta_sink, G_TYPE_OBJECT, 0,
                         G_IMPLEMENT_INTERFACE (SCREENCAST_TYPE_SINK,
@@ -250,6 +251,7 @@ static void
 screencast_meta_sink_sink_iface_init (ScreencastSinkIface *iface)
 {
   iface->start_stream = screencast_meta_sink_sink_start_stream;
+  iface->stop_stream = screencast_meta_sink_sink_stop_stream;
 }
 
 static ScreencastSink *
@@ -260,6 +262,13 @@ screencast_meta_sink_sink_start_stream (ScreencastSink *sink)
   g_assert (meta_sink->current_sink);
 
   return screencast_sink_start_stream (meta_sink->current_sink);
+}
+
+static void
+screencast_meta_sink_sink_stop_stream (ScreencastSink *sink)
+{
+  /* This must not happen. */
+  g_assert_not_reached ();
 }
 
 /******************************************************************
