@@ -296,7 +296,7 @@ client_connected_cb (ScreencastWFDP2PSink *sink, WfdClient *client, WfdServer *s
                            G_CONNECT_SWAPPED);
 }
 
-static GstElement*
+static GstElement *
 server_create_source_cb (ScreencastWFDP2PSink *sink, WfdServer *server)
 {
   GstElement *res;
@@ -313,6 +313,7 @@ p2p_connected (GObject      *source_object,
 {
   ScreencastWFDP2PSink *sink = NULL;
   NMActiveConnection *ac = NULL;
+
   g_autoptr(GError) error = NULL;
 
   g_debug ("ScreencastWfdP2PSink: Got P2P connection");
@@ -370,6 +371,7 @@ screencast_wfd_p2p_sink_sink_start_stream (ScreencastSink *sink)
 {
   ScreencastWFDP2PSink *self = SCREENCAST_WFD_P2P_SINK (sink);
   GVariant *options = NULL;
+
   g_autoptr(GVariantBuilder) builder = NULL;
 
   g_return_val_if_fail (self->state == SCREENCAST_SINK_STATE_DISCONNECTED, NULL);

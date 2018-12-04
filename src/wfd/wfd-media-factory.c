@@ -24,8 +24,7 @@ enum {
 
 static GParamSpec *properties[N_PROPS];
 
-enum
-{
+enum {
   SIGNAL_CREATE_SOURCE,
   NR_SIGNALS
 };
@@ -145,7 +144,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
   parse = gst_element_factory_make ("h264parse", "wfd-h264parse");
   success &= gst_bin_add (bin, parse);
   g_object_set (parse,
-                "config-interval", (gint) -1,
+                "config-interval", (gint) - 1,
                 NULL);
 
   caps = gst_caps_from_string ("video/x-h264,alignment=nal,stream-format=byte-stream");
@@ -217,64 +216,70 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
 
 static gboolean
 pipeline_bus_watch_cb (GstBus     *bus,
-         GstMessage *message,
-         gpointer    data)
+                       GstMessage *message,
+                       gpointer    data)
 {
-  switch (GST_MESSAGE_TYPE (message)) {
+  switch (GST_MESSAGE_TYPE (message))
+    {
     case GST_MESSAGE_ERROR: {
-      GError *err;
-      gchar *debug;
+        GError *err;
+        gchar *debug;
 
-      gst_message_parse_error (message, &err, &debug);
-      g_print ("Error from %s: %s\n", GST_MESSAGE_SRC_NAME (message), err->message);
-      g_error_free (err);
-      g_free (debug);
+        gst_message_parse_error (message, &err, &debug);
+        g_print ("Error from %s: %s\n", GST_MESSAGE_SRC_NAME (message), err->message);
+        g_error_free (err);
+        g_free (debug);
 
-      break;
-    }
+        break;
+      }
+
     case GST_MESSAGE_WARNING: {
-      GError *err;
-      gchar *debug;
+        GError *err;
+        gchar *debug;
 
-      gst_message_parse_warning (message, &err, &debug);
-      g_print ("Warning from %s: %s\n", GST_MESSAGE_SRC_NAME (message), err->message);
-      g_error_free (err);
-      g_free (debug);
+        gst_message_parse_warning (message, &err, &debug);
+        g_print ("Warning from %s: %s\n", GST_MESSAGE_SRC_NAME (message), err->message);
+        g_error_free (err);
+        g_free (debug);
 
-      break;
-    }
+        break;
+      }
+
     case GST_MESSAGE_QOS: {
-      gboolean live;
-      guint64 running_time, stream_time, timestamp, duration;
-      guint64 processed, dropped;
-      gint64 jitter;
-      gdouble proportion;
-      gint quality;
+        gboolean live;
+        guint64 running_time, stream_time, timestamp, duration;
+        guint64 processed, dropped;
+        gint64 jitter;
+        gdouble proportion;
+        gint quality;
 
-      gst_message_parse_qos (message, &live, &running_time, &stream_time, &timestamp, &duration);
-      gst_message_parse_qos_stats (message, NULL, &processed, &dropped);
-      gst_message_parse_qos_values (message, &jitter, &proportion, &quality);
+        gst_message_parse_qos (message, &live, &running_time, &stream_time, &timestamp, &duration);
+        gst_message_parse_qos_stats (message, NULL, &processed, &dropped);
+        gst_message_parse_qos_values (message, &jitter, &proportion, &quality);
 
-      g_debug ("QOS: proportion: %.3f, processed: %" G_GUINT64_FORMAT ", dropped: %" G_GUINT64_FORMAT "",
-               proportion, processed, dropped);
-      break;
-    }
+        g_debug ("QOS: proportion: %.3f, processed: %" G_GUINT64_FORMAT ", dropped: %" G_GUINT64_FORMAT "",
+                 proportion, processed, dropped);
+        break;
+      }
+
     case GST_MESSAGE_EOS:
       /* end-of-stream */
       g_debug ("reached EOS");
       break;
+
     default:
       /* unhandled message */
       break;
-  }
+    }
 
   return TRUE;
 }
 
-static GstElement*
+static GstElement *
 wfd_media_factory_create_pipeline (GstRTSPMediaFactory *factory, GstRTSPMedia *media)
 {
   GstElement *pipeline;
+
   g_autoptr(GstBus) bus = NULL;
 
   pipeline = GST_RTSP_MEDIA_FACTORY_CLASS (wfd_media_factory_parent_class)->create_pipeline (factory, media);
@@ -448,6 +453,7 @@ static void
 wfd_media_factory_init (WfdMediaFactory *self)
 {
   GstRTSPMediaFactory *media_factory = GST_RTSP_MEDIA_FACTORY (self);
+
   g_autoptr(GstElementFactory) x264enc_factory = NULL;
 
   /* Default to openh264 and assume it is usable, prefer x264enc when available. */

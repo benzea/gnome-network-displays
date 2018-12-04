@@ -494,16 +494,16 @@ screencast_portal_get_source (ScreencastPortal *self)
 
   /* The sync call here is not nice, but not a big deal either */
   res = g_dbus_proxy_call_with_unix_fd_list_sync (self->screencast,
-                               "OpenPipeWireRemote",
-                                g_variant_builder_end (&builder),
-                                G_DBUS_CALL_FLAGS_NONE,
-                               500,
+                                                  "OpenPipeWireRemote",
+                                                  g_variant_builder_end (&builder),
+                                                  G_DBUS_CALL_FLAGS_NONE,
+                                                  500,
                                                   NULL,
                                                   &out_fd_list,
                                                   NULL,
                                                   &error);
 
-  if (!res || !out_fd_list || g_unix_fd_list_get_length(out_fd_list) != 1)
+  if (!res || !out_fd_list || g_unix_fd_list_get_length (out_fd_list) != 1)
     {
       g_warning ("Error opening pipewire remote: %s", error->message);
       return NULL;

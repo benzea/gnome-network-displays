@@ -56,9 +56,9 @@ G_DEFINE_TYPE_EXTENDED (ScreencastDummyWFDSink, screencast_dummy_wfd_sink, G_TYP
 
 static void
 screencast_dummy_wfd_sink_get_property (GObject    *object,
-                                      guint       prop_id,
-                                      GValue     *value,
-                                      GParamSpec *pspec)
+                                        guint       prop_id,
+                                        GValue     *value,
+                                        GParamSpec *pspec)
 {
   ScreencastDummyWFDSink *sink = SCREENCAST_DUMMY_WFD_SINK (object);
 
@@ -171,7 +171,7 @@ client_connected_cb (ScreencastDummyWFDSink *sink, WfdClient *client, WfdServer 
                            G_CONNECT_SWAPPED);
 }
 
-static GstElement*
+static GstElement *
 server_create_source_cb (ScreencastDummyWFDSink *sink, WfdServer *server)
 {
   GstElement *res;

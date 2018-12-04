@@ -18,8 +18,7 @@ enum {
 
 static GParamSpec *properties[N_PROPS];
 
-enum
-{
+enum {
   SIGNAL_CREATE_SOURCE,
   NR_SIGNALS
 };
@@ -170,6 +169,7 @@ static gboolean
 clean_pool (gpointer user_data)
 {
   GstRTSPServer *server = GST_RTSP_SERVER (user_data);
+
   g_autoptr(GstRTSPSessionPool) pool = NULL;
 
   pool = gst_rtsp_server_get_session_pool (server);
@@ -178,7 +178,7 @@ clean_pool (gpointer user_data)
   return G_SOURCE_CONTINUE;
 }
 
-static GstElement*
+static GstElement *
 factory_source_create_cb (WfdMediaFactory *factory, WfdServer *self)
 {
   GstElement *res;
@@ -213,8 +213,8 @@ wfd_server_init (WfdServer *self)
 
 static GstRTSPFilterResult
 pool_filter_remove_cb (GstRTSPSessionPool *pool,
-                       GstRTSPSession *session,
-                       gpointer user_data)
+                       GstRTSPSession     *session,
+                       gpointer            user_data)
 {
   return GST_RTSP_FILTER_REMOVE;
 }
@@ -222,7 +222,7 @@ pool_filter_remove_cb (GstRTSPSessionPool *pool,
 static GstRTSPFilterResult
 client_filter_remove_cb (GstRTSPServer *server,
                          GstRTSPClient *client,
-                         gpointer user_data)
+                         gpointer       user_data)
 {
   return GST_RTSP_FILTER_REMOVE;
 }
@@ -231,6 +231,7 @@ void
 wfd_server_purge (WfdServer *self)
 {
   GstRTSPServer *server = GST_RTSP_SERVER (self);
+
   g_autoptr(GstRTSPSessionPool) session_pool = NULL;
   g_autoptr(GstRTSPThreadPool) thread_pool = NULL;
 
@@ -242,4 +243,3 @@ wfd_server_purge (WfdServer *self)
   thread_pool = gst_rtsp_server_get_thread_pool (server);
   gst_rtsp_session_pool_filter (session_pool, pool_filter_remove_cb, NULL);
 }
-

@@ -22,9 +22,9 @@
 
 struct _ScreencastDummyProvider
 {
-  GObject     parent_instance;
+  GObject    parent_instance;
 
-  GPtrArray  *sinks;
+  GPtrArray *sinks;
 };
 
 static void screencast_dummy_provider_provider_iface_init (ScreencastProviderIface *iface);

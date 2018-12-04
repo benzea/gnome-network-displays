@@ -42,7 +42,7 @@ struct _GnomeScreencastWindow
   ScreencastPortal *portal;
 #endif
 
-  GCancellable    *cancellable;
+  GCancellable   *cancellable;
 
   ScreencastSink *stream_sink;
 
@@ -64,8 +64,8 @@ struct _GnomeScreencastWindow
 
 G_DEFINE_TYPE (GnomeScreencastWindow, gnome_screencast_window, GTK_TYPE_APPLICATION_WINDOW)
 
-static GstElement*
-sink_create_source_cb (GnomeScreencastWindow *self, ScreencastSink *sink)
+static GstElement *
+sink_create_source_cb (GnomeScreencastWindow * self, ScreencastSink * sink)
 {
   GstBin *bin;
   GstElement *src, *dst, *res;
@@ -81,7 +81,7 @@ sink_create_source_cb (GnomeScreencastWindow *self, ScreencastSink *sink)
   dst = gst_element_factory_make ("intervideosink", "inter video sink");
   g_object_set (dst,
                 "channel", "screencast-inter-video",
-                "max-lateness", (gint64) -1,
+                "max-lateness", (gint64) - 1,
                 NULL);
   gst_bin_add (bin, dst);
 
@@ -189,9 +189,7 @@ find_sink_list_row_activated_cb (GnomeScreencastWindow *self, ScreencastSinkRow 
   self->stream_sink = screencast_sink_start_stream (sink);
 
   if (!self->stream_sink)
-    {
-      g_warning ("ScreencastWindow: Could not start streaming!");
-    }
+    g_warning ("ScreencastWindow: Could not start streaming!");
 
   g_signal_connect_object (self->stream_sink,
                            "create-source",
@@ -246,11 +244,12 @@ gnome_screencast_window_class_init (GnomeScreencastWindowClass *klass)
 
 #if HAVE_SCREENCAST_PORTAL
 static void
-screencast_portal_init_async_cb (GObject *source_object,
+screencast_portal_init_async_cb (GObject      *source_object,
                                  GAsyncResult *res,
-                                 gpointer user_data)
+                                 gpointer      user_data)
 {
   GnomeScreencastWindow *window;
+
   g_autoptr(GError) error = NULL;
 
   if (!g_async_initable_init_finish (G_ASYNC_INITABLE (source_object), res, &error))

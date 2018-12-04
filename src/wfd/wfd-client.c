@@ -198,6 +198,7 @@ wfd_client_configure_client_media (GstRTSPClient * client,
                                    GstRTSPContext * ctx)
 {
   WfdClient *self = WFD_CLIENT (client);
+
   g_autoptr(GstRTSPThreadPool) thread_pool = NULL;
   g_autoptr(GstRTSPThread) thread = NULL;
   g_autoptr(GstElement) element = NULL;
@@ -435,7 +436,9 @@ wfd_client_pre_options_request (GstRTSPClient *client, GstRTSPContext *ctx)
           self->init_state = INIT_STATE_DONE;
         }
       else
-        g_idle_add (wfd_client_idle_wfd_query_params, g_object_ref (client));
+        {
+          g_idle_add (wfd_client_idle_wfd_query_params, g_object_ref (client));
+        }
     }
 
   return GST_RTSP_STS_OK;

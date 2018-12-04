@@ -358,6 +358,7 @@ GList *
 wfd_video_codec_get_resolutions (WfdVideoCodec *self)
 {
   WfdResolution *resolution;
+
   g_autoptr(GList) res = NULL;
   guint32 bits, i;
 

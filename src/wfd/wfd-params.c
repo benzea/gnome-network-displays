@@ -41,6 +41,7 @@ wfd_params_new (void)
 {
   WfdParams *self;
   WfdVideoCodec *basic_codec;
+
   g_autoptr(GList) resolutions = NULL;
 
   self = g_slice_new0 (WfdParams);
