@@ -110,6 +110,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
       encoder = gst_element_factory_make ("openh264enc", "wfd-encoder");
       success &= gst_bin_add (bin, encoder);
       g_object_set (encoder,
+                    "qos", TRUE,
                     "multi-thread", 1,
                     "usage-type", 1, /* screen */
                     "slice-mode", 1, /* n-slices */
