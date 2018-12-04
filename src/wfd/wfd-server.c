@@ -81,14 +81,22 @@ wfd_server_create_client (GstRTSPServer *server)
 {
   g_autoptr(WfdClient) client;
   GstRTSPClient *rtsp_client;
+  g_autoptr(GstRTSPSessionPool) session_pool = NULL;
+  g_autoptr(GstRTSPMountPoints) mount_points = NULL;
+  g_autoptr(GstRTSPAuth) auth = NULL;
+  g_autoptr(GstRTSPThreadPool) thread_pool = NULL;
 
   client = wfd_client_new ();
   rtsp_client = GST_RTSP_CLIENT (client);
 
-  gst_rtsp_client_set_session_pool (rtsp_client, gst_rtsp_server_get_session_pool (server));
-  gst_rtsp_client_set_mount_points (rtsp_client, gst_rtsp_server_get_mount_points (server));
-  gst_rtsp_client_set_auth (rtsp_client, gst_rtsp_server_get_auth (server));
-  gst_rtsp_client_set_thread_pool (rtsp_client, gst_rtsp_server_get_thread_pool (server));
+  session_pool = gst_rtsp_server_get_session_pool (server);
+  gst_rtsp_client_set_session_pool (rtsp_client, session_pool);
+  mount_points = gst_rtsp_server_get_mount_points (server);
+  gst_rtsp_client_set_mount_points (rtsp_client, mount_points);
+  auth = gst_rtsp_server_get_auth (server);
+  gst_rtsp_client_set_auth (rtsp_client, auth);
+  thread_pool = gst_rtsp_server_get_thread_pool (server);
+  gst_rtsp_client_set_thread_pool (rtsp_client, thread_pool);
 
   return GST_RTSP_CLIENT (g_steal_pointer (&client));
 }
@@ -162,7 +170,7 @@ static gboolean
 clean_pool (gpointer user_data)
 {
   GstRTSPServer *server = GST_RTSP_SERVER (user_data);
-  GstRTSPSessionPool *pool;
+  g_autoptr(GstRTSPSessionPool) pool = NULL;
 
   pool = gst_rtsp_server_get_session_pool (server);
   gst_rtsp_session_pool_cleanup (pool);
@@ -184,7 +192,7 @@ static void
 wfd_server_init (WfdServer *self)
 {
   g_autoptr(WfdMediaFactory) factory = NULL;
-  GstRTSPMountPoints *mount_points;
+  g_autoptr(GstRTSPMountPoints) mount_points = NULL;
   /* We need to clean up the pool regularly as it does not happen
    * automatically. */
   self->clean_pool_source_id = g_timeout_add_seconds (2, clean_pool, self);
@@ -223,11 +231,15 @@ void
 wfd_server_purge (WfdServer *self)
 {
   GstRTSPServer *server = GST_RTSP_SERVER (self);
-  GstRTSPSessionPool *session_pool;
+  g_autoptr(GstRTSPSessionPool) session_pool = NULL;
+  g_autoptr(GstRTSPThreadPool) thread_pool = NULL;
 
   session_pool = gst_rtsp_server_get_session_pool (server);
   gst_rtsp_session_pool_filter (session_pool, pool_filter_remove_cb, NULL);
 
   gst_rtsp_server_client_filter (server, client_filter_remove_cb, NULL);
+
+  thread_pool = gst_rtsp_server_get_thread_pool (server);
+  gst_rtsp_session_pool_filter (session_pool, pool_filter_remove_cb, NULL);
 }
 

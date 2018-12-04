@@ -59,6 +59,8 @@ wfd_client_finalize (GObject *object)
 {
   WfdClient *self = (WfdClient *) object;
 
+  g_debug ("WfdClient: Finalize");
+
   g_clear_pointer (&self->params, wfd_params_free);
 
   if (self->keep_alive_source_id)
@@ -196,7 +198,9 @@ wfd_client_configure_client_media (GstRTSPClient * client,
                                    GstRTSPContext * ctx)
 {
   WfdClient *self = WFD_CLIENT (client);
-  g_autoptr(GstElement) element;
+  g_autoptr(GstRTSPThreadPool) thread_pool = NULL;
+  g_autoptr(GstRTSPThread) thread = NULL;
+  g_autoptr(GstElement) element = NULL;
   gboolean res;
 
   g_return_val_if_fail (self->params->selected_codec, FALSE);
@@ -207,7 +211,9 @@ wfd_client_configure_client_media (GstRTSPClient * client,
 
   res = GST_RTSP_CLIENT_CLASS (wfd_client_parent_class)->configure_client_media (client, media, stream, ctx);
 
-  gst_rtsp_media_prepare (media, gst_rtsp_thread_pool_get_thread (gst_rtsp_client_get_thread_pool (client), GST_RTSP_THREAD_TYPE_MEDIA, ctx));
+  thread_pool = gst_rtsp_client_get_thread_pool (client);
+  thread = gst_rtsp_thread_pool_get_thread (thread_pool, GST_RTSP_THREAD_TYPE_MEDIA, ctx);
+  gst_rtsp_media_prepare (media, g_steal_pointer (&thread));
 
   return res;
 }
