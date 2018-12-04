@@ -462,4 +462,5 @@ wfd_media_factory_init (WfdMediaFactory *self)
     }
 
   gst_rtsp_media_factory_set_media_gtype (media_factory, WFD_TYPE_MEDIA);
+  gst_rtsp_media_factory_set_suspend_mode (media_factory, GST_RTSP_SUSPEND_MODE_RESET);
 }
