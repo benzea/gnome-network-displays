@@ -24,7 +24,15 @@ struct _ScreencastDummyProvider
 {
   GObject    parent_instance;
 
+  gboolean   discover;
+
   GPtrArray *sinks;
+};
+
+enum {
+  PROP_DISCOVER = 1,
+
+  PROP_LAST = PROP_DISCOVER,
 };
 
 static void screencast_dummy_provider_provider_iface_init (ScreencastProviderIface *iface);
@@ -34,6 +42,47 @@ G_DEFINE_TYPE_EXTENDED (ScreencastDummyProvider, screencast_dummy_provider, G_TY
                         G_IMPLEMENT_INTERFACE (SCREENCAST_TYPE_PROVIDER,
                                                screencast_dummy_provider_provider_iface_init);
                        )
+
+static void
+screencast_dummy_provider_get_property (GObject    *object,
+                                        guint       prop_id,
+                                        GValue     *value,
+                                        GParamSpec *pspec)
+{
+  ScreencastDummyProvider *self = SCREENCAST_DUMMY_PROVIDER (object);
+
+  switch (prop_id)
+    {
+    case PROP_DISCOVER:
+      g_value_set_boolean (value, self->discover);
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
+
+static void
+screencast_dummy_provider_set_property (GObject      *object,
+                                        guint         prop_id,
+                                        const GValue *value,
+                                        GParamSpec   *pspec)
+{
+  ScreencastDummyProvider *self = SCREENCAST_DUMMY_PROVIDER (object);
+
+  switch (prop_id)
+    {
+    case PROP_DISCOVER:
+      self->discover = g_value_get_boolean (value);
+
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
 
 static void
 screencast_dummy_provider_finalize (GObject *object)
@@ -50,12 +99,17 @@ screencast_dummy_provider_class_init (ScreencastDummyProviderClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
+  object_class->get_property = screencast_dummy_provider_get_property;
+  object_class->set_property = screencast_dummy_provider_set_property;
   object_class->finalize = screencast_dummy_provider_finalize;
+
+  g_object_class_override_property (object_class, PROP_DISCOVER, "discover");
 }
 
 static void
 screencast_dummy_provider_init (ScreencastDummyProvider *dummy_provider)
 {
+  dummy_provider->discover = TRUE;
   dummy_provider->sinks = g_ptr_array_new_with_free_func (g_object_unref);
 
   g_ptr_array_add (dummy_provider->sinks, screencast_dummy_wfd_sink_new ());

@@ -29,13 +29,17 @@ struct _ScreencastWFDP2PProvider
   NMClient  *nm_client;
   NMDevice  *nm_device;
 
+  gboolean   discover;
   guint      p2p_find_source_id;
 };
 
 enum {
   PROP_CLIENT = 1,
   PROP_DEVICE,
-  PROP_LAST
+
+  PROP_DISCOVER,
+
+  PROP_LAST = PROP_DISCOVER,
 };
 
 static void screencast_wfd_p2p_provider_provider_iface_init (ScreencastProviderIface *iface);
@@ -106,6 +110,10 @@ screencast_wfd_p2p_provider_get_property (GObject    *object,
       g_value_set_object (value, provider->nm_device);
       break;
 
+    case PROP_DISCOVER:
+      g_value_set_boolean (value, provider->discover);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -153,11 +161,33 @@ screencast_wfd_p2p_provider_set_property (GObject      *object,
                                G_CONNECT_SWAPPED);
 
       nm_device_p2p_wifi_start_find (NM_DEVICE_P2P_WIFI (provider->nm_device), NULL, NULL);
-      provider->p2p_find_source_id = g_timeout_add_seconds (20, device_restart_find_timeout, provider);
+      if (provider->discover)
+        provider->p2p_find_source_id = g_timeout_add_seconds (20, device_restart_find_timeout, provider);
 
       peers = nm_device_p2p_wifi_get_peers (NM_DEVICE_P2P_WIFI (provider->nm_device));
       for (gint i = 0; i < peers->len; i++)
         peer_added_cb (provider, g_ptr_array_index (peers, i), provider->nm_device);
+
+      break;
+
+    case PROP_DISCOVER:
+      provider->discover = g_value_get_boolean (value);
+      g_debug ("WfdP2PProvider: Discover is now set to %d", provider->discover);
+
+      if (provider->discover)
+        {
+          nm_device_p2p_wifi_start_find (NM_DEVICE_P2P_WIFI (provider->nm_device), NULL, NULL);
+          if (!provider->p2p_find_source_id)
+            provider->p2p_find_source_id = g_timeout_add_seconds (20, device_restart_find_timeout, provider);
+        }
+      else
+        {
+          if (provider->p2p_find_source_id)
+            g_source_remove (provider->p2p_find_source_id);
+          provider->p2p_find_source_id = 0;
+
+          nm_device_p2p_wifi_stop_find (NM_DEVICE_P2P_WIFI (provider->nm_device), NULL, NULL);
+        }
 
       break;
 
@@ -206,6 +236,8 @@ screencast_wfd_p2p_provider_class_init (ScreencastWFDP2PProviderClass *klass)
                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, PROP_LAST, props);
+
+  g_object_class_override_property (object_class, PROP_DISCOVER, "discover");
 }
 
 static void

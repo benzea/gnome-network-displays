@@ -24,9 +24,17 @@ struct _ScreencastMetaProvider
 {
   GObject     parent_instance;
 
+  gboolean    discover;
+
   GHashTable *deduplicate;
   GPtrArray  *sinks;
   GPtrArray  *providers;
+};
+
+enum {
+  PROP_DISCOVER = 1,
+
+  PROP_LAST = PROP_DISCOVER,
 };
 
 static void screencast_meta_provider_provider_iface_init (ScreencastProviderIface *iface);
@@ -147,6 +155,50 @@ provider_sink_removed_cb (ScreencastMetaProvider *meta_provider, ScreencastSink 
 }
 
 static void
+screencast_meta_provider_get_property (GObject    *object,
+                                       guint       prop_id,
+                                       GValue     *value,
+                                       GParamSpec *pspec)
+{
+  ScreencastMetaProvider *self = SCREENCAST_META_PROVIDER (object);
+
+  switch (prop_id)
+    {
+    case PROP_DISCOVER:
+      g_value_set_boolean (value, self->discover);
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
+
+static void
+screencast_meta_provider_set_property (GObject      *object,
+                                       guint         prop_id,
+                                       const GValue *value,
+                                       GParamSpec   *pspec)
+{
+  ScreencastMetaProvider *self = SCREENCAST_META_PROVIDER (object);
+
+  switch (prop_id)
+    {
+    case PROP_DISCOVER:
+      self->discover = g_value_get_boolean (value);
+
+      for (gint i = 0; i < self->providers->len; i++)
+        g_object_set (g_ptr_array_index (self->providers, i), "discover", self->discover, NULL);
+
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
+
+static void
 screencast_meta_provider_finalize (GObject *object)
 {
   ScreencastMetaProvider *meta_provider = SCREENCAST_META_PROVIDER (object);
@@ -168,12 +220,18 @@ screencast_meta_provider_class_init (ScreencastMetaProviderClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
+  object_class->get_property = screencast_meta_provider_get_property;
+  object_class->set_property = screencast_meta_provider_set_property;
   object_class->finalize = screencast_meta_provider_finalize;
+
+  g_object_class_override_property (object_class, PROP_DISCOVER, "discover");
 }
 
 static void
 screencast_meta_provider_init (ScreencastMetaProvider *meta_provider)
 {
+  meta_provider->discover = TRUE;
+
   meta_provider->sinks = g_ptr_array_new_with_free_func (g_object_unref);
   meta_provider->providers = g_ptr_array_new_with_free_func (g_object_unref);
 

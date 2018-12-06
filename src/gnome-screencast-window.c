@@ -163,6 +163,7 @@ sink_notify_state_cb (GnomeScreencastWindow *self, GParamSpec *pspec, Screencast
       gtk_container_foreach (GTK_CONTAINER (self->error_sink_list), remove_widget, self->error_sink_list);
 
       gtk_stack_set_visible_child_name (self->step_stack, "find");
+      g_object_set (self->meta_provider, "discover", TRUE, NULL);
 
       g_signal_handlers_disconnect_by_data (self->stream_sink, self);
       g_clear_object (&self->stream_sink);
@@ -203,6 +204,7 @@ find_sink_list_row_activated_cb (GnomeScreencastWindow *self, ScreencastSinkRow 
                            self,
                            G_CONNECT_SWAPPED);
 
+  g_object_set (self->meta_provider, "discover", FALSE, NULL);
   gtk_stack_set_visible_child_name (self->step_stack, "connect");
   gtk_container_add (GTK_CONTAINER (self->connect_sink_list),
                      GTK_WIDGET (screencast_sink_row_new (self->stream_sink)));
