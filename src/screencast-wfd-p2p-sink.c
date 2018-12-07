@@ -341,12 +341,14 @@ p2p_connected (GObject      *source_object,
    * XXX: Not yet implemented, but we should only bind on the P2P device
    * wfd_server_set_interface (GST_RTSP_SERVER (sink->server), nm_device_get_ip_iface (sink->nm_device));
    */
-  if (gst_rtsp_server_attach (GST_RTSP_SERVER (sink->server), NULL) < 0)
-    {
-      screencast_wfd_p2p_sink_sink_stop_stream_int (sink);
+  sink->server_source_id = gst_rtsp_server_attach (GST_RTSP_SERVER (sink->server), NULL);
 
+  if (sink->server_source_id == 0)
+    {
       sink->state = SCREENCAST_SINK_STATE_ERROR;
       g_object_notify (G_OBJECT (sink), "state");
+      g_clear_object (&sink->server);
+
       return;
     }
 

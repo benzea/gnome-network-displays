@@ -193,7 +193,7 @@ screencast_dummy_wfd_sink_sink_start_stream (ScreencastSink *sink)
   self->server = wfd_server_new ();
   self->server_source_id = gst_rtsp_server_attach (GST_RTSP_SERVER (self->server), NULL);
 
-  if (self->server_source_id < 0)
+  if (self->server_source_id == 0)
     {
       self->state = SCREENCAST_SINK_STATE_ERROR;
       g_object_notify (G_OBJECT (self), "state");
