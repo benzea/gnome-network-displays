@@ -15,11 +15,8 @@ gnome_screencast_sources = [
   'screencast-wfd-p2p-registry.c',
   'screencast-dummy-provider.c',
   'screencast-dummy-wfd-sink.c',
+  'screencast-portal.c',
 ]
-
-if have_screencast_portal
-  gnome_screencast_sources += [ 'screencast-portal.c' ]
-endif
 
 enum_headers = files('screencast-sink.h')
 

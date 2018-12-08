@@ -27,9 +27,7 @@
 
 #include <gst/gst.h>
 
-#if HAVE_SCREENCAST_PORTAL
 #include "screencast-portal.h"
-#endif
 
 struct _GnomeScreencastWindow
 {
@@ -38,9 +36,8 @@ struct _GnomeScreencastWindow
   ScreencastMetaProvider   *meta_provider;
   ScreencastWFDP2PRegistry *wfd_p2p_registry;
 
-#if HAVE_SCREENCAST_PORTAL
   ScreencastPortal *portal;
-#endif
+  gboolean          use_x11;
 
   GCancellable   *cancellable;
 
@@ -71,11 +68,11 @@ sink_create_source_cb (GnomeScreencastWindow * self, ScreencastSink * sink)
   GstElement *src, *dst, *res;
 
   bin = GST_BIN (gst_bin_new ("screencast source bin"));
-#if HAVE_SCREENCAST_PORTAL
-  src = screencast_portal_get_source (self->portal);
-#else
-  src = gst_element_factory_make ("ximagesrc", "X11 screencast source");
-#endif
+  g_debug ("use x11: %d", self->use_x11);
+  if (self->use_x11)
+    src = gst_element_factory_make ("ximagesrc", "X11 screencast source");
+  else
+    src = screencast_portal_get_source (self->portal);
   gst_bin_add (bin, src);
 
   dst = gst_element_factory_make ("intervideosink", "inter video sink");
@@ -176,13 +173,11 @@ find_sink_list_row_activated_cb (GnomeScreencastWindow *self, ScreencastSinkRow 
 {
   ScreencastSink *sink;
 
-#if HAVE_SCREENCAST_PORTAL
-  if (!self->portal)
+  if (!self->portal && ! self->use_x11)
     {
       g_warning ("Cannot start streaming right now as we don't have a portal!");
       return;
     }
-#endif
 
   g_assert (SCREENCAST_IS_SINK_ROW (row));
 
@@ -244,7 +239,6 @@ gnome_screencast_window_class_init (GnomeScreencastWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GnomeScreencastWindow, error_return);
 }
 
-#if HAVE_SCREENCAST_PORTAL
 static void
 screencast_portal_init_async_cb (GObject      *source_object,
                                  GAsyncResult *res,
@@ -260,9 +254,17 @@ screencast_portal_init_async_cb (GObject      *source_object,
         {
           g_warning ("Error initing screencast portal: %s", error->message);
 
-          /* XXX: This is fatal! */
           window = GNOME_SCREENCAST_WINDOW (user_data);
-          gtk_widget_destroy (GTK_WIDGET (window));
+
+          /* If this the error was for an unknown method, then we likely
+           * don't have a gnome-shell or it does not support the screen casting
+           * portal.
+           * In this case we assume that an xvimagesrc is usable, in all other
+           * cases it is a fatal error. */
+          if (!g_error_matches (error, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_METHOD))
+            gtk_widget_destroy (GTK_WIDGET (window));
+          else
+            window->use_x11 = TRUE;
         }
 
       g_object_unref (source_object);
@@ -272,7 +274,6 @@ screencast_portal_init_async_cb (GObject      *source_object,
   window = GNOME_SCREENCAST_WINDOW (user_data);
   window->portal = SCREENCAST_PORTAL (source_object);
 }
-#endif
 
 static void
 stream_stop_clicked_cb (GnomeScreencastWindow *self)
@@ -286,9 +287,7 @@ stream_stop_clicked_cb (GnomeScreencastWindow *self)
 static void
 gnome_screencast_window_init (GnomeScreencastWindow *self)
 {
-#if HAVE_SCREENCAST_PORTAL
   ScreencastPortal *portal;
-#endif
   gtk_widget_init_template (GTK_WIDGET (self));
 
   self->meta_provider = screencast_meta_provider_new ();
@@ -332,12 +331,10 @@ gnome_screencast_window_init (GnomeScreencastWindow *self)
                            self,
                            G_CONNECT_SWAPPED);
 
-#if HAVE_SCREENCAST_PORTAL
   portal = screencast_portal_new ();
   g_async_initable_init_async (G_ASYNC_INITABLE (portal),
                                G_PRIORITY_LOW,
                                self->cancellable,
                                screencast_portal_init_async_cb,
                                self);
-#endif
 }

@@ -297,7 +297,7 @@ wfd_video_codec_new_from_desc (gint native, const gchar *descr)
 
   native_res = resolution_table_lookup (native & 0x7, native >> 3);
   if (native_res)
-    res->native = wfd_resolution_copy (native_res);
+    res->native = wfd_resolution_copy ((WfdResolution*) native_res);
 
   return g_steal_pointer (&res);
 }

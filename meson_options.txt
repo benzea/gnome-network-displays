@@ -1,5 +1,0 @@
-option('screencast_portal',
-  type: 'boolean',
-  value: true,
-  description: 'Use the screencast portal, if unset uses X11 image source'
-)

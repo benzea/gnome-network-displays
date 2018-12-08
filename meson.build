@@ -5,13 +5,10 @@ project('gnome-screencast', 'c',        version: '0.1.0',
 gnome = import('gnome')
 i18n = import('i18n')
 
-have_screencast_portal = get_option('screencast_portal')
-
 config_h = configuration_data()
 config_h.set_quoted('PACKAGE_VERSION', meson.project_version())
 config_h.set_quoted('GETTEXT_PACKAGE', 'gnome-screencast')
 config_h.set_quoted('LOCALEDIR', join_paths(get_option('prefix'), get_option('localedir')))
-config_h.set10('HAVE_SCREENCAST_PORTAL', have_screencast_portal)
 configure_file(
   output: 'gnome-screencast-config.h',
   configuration: config_h,

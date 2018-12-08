@@ -13,6 +13,8 @@ struct _ScreencastPortal
   gint        portal_signal_id;
   GDBusProxy *screencast;
   guint32     stream_node_id;
+
+  GCancellable *cancellable;
 };
 
 static void      screencast_portal_async_initable_iface_init (GAsyncInitableIface *iface);
@@ -90,15 +92,20 @@ init_check_dbus_error (GObject      *source_object,
                                      &error);
   if (result == NULL)
     {
-      GCancellable *cancellable;
-      g_warning ("Error calling DBus method during Screencast portal initialization: %s",
-                 error->message);
+      /* Do nothing if the operation was cancelled, the task was likely
+       * already returned from elsewhere. */
+      if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        {
+          ScreencastPortal *self = SCREENCAST_PORTAL (g_task_get_source_object (task));
 
-      cancellable = g_task_get_cancellable (task);
-      g_cancellable_cancel (cancellable);
+          g_warning ("Error calling DBus method during Screencast portal initialization: %s",
+                     error->message);
 
-      g_task_return_error (task, g_steal_pointer (&error));
-      g_object_unref (task);
+          g_cancellable_cancel (self->cancellable);
+
+          g_task_return_error (task, g_steal_pointer (&error));
+          g_object_unref (task);
+        }
     }
 }
 
@@ -132,7 +139,7 @@ portal_start_response_received (GDBusConnection *connection,
       g_task_return_new_error (task,
                                G_IO_ERROR,
                                G_IO_ERROR_FAILED,
-                               "Failed to create portal sesssion");
+                               "Failed to create portal session");
       g_object_unref (task);
       return;
     }
@@ -220,7 +227,7 @@ portal_select_source_response_received (GDBusConnection *connection,
                      g_variant_builder_end (&builder),
                      G_DBUS_CALL_FLAGS_NONE,
                      1000,
-                     g_task_get_cancellable (task),
+                     self->cancellable,
                      init_check_dbus_error,
                      task);
 }
@@ -287,7 +294,7 @@ portal_create_session_response_received (GDBusConnection *connection,
                      g_variant_builder_end (&builder),
                      G_DBUS_CALL_FLAGS_NONE,
                      1000,
-                     g_task_get_cancellable (task),
+                     self->cancellable,
                      init_check_dbus_error,
                      task);
 }
@@ -314,7 +321,7 @@ on_portal_screencast_proxy_acquired (GObject      *source_object,
   if (screencast == NULL)
     {
       if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
-        g_warning ("Could not get session bus: %s", error->message);
+        g_warning ("Could not create screencast portal proxy: %s", error->message);
 
       g_task_return_error (task, g_steal_pointer (&error));
       return;
@@ -339,7 +346,7 @@ on_portal_screencast_proxy_acquired (GObject      *source_object,
                                                                NULL);
 
 
-  g_variant_builder_open (&builder, "a{sv}");
+  g_variant_builder_open (&builder, G_VARIANT_TYPE ("a{sv}"));
   g_variant_builder_add (&builder, "{sv}", "session_handle_token", g_variant_new_string (session_token));
   g_variant_builder_add (&builder, "{sv}", "handle_token", g_variant_new_string (token));
   g_variant_builder_close (&builder);
@@ -349,7 +356,7 @@ on_portal_screencast_proxy_acquired (GObject      *source_object,
                      g_variant_builder_end (&builder),
                      G_DBUS_CALL_FLAGS_NONE,
                      1000,
-                     g_task_get_cancellable (task),
+                     self->cancellable,
                      init_check_dbus_error,
                      task);
 }
@@ -362,6 +369,25 @@ screencast_portal_async_initable_iface_init (GAsyncInitableIface *iface)
 }
 
 static void
+init_cancelable_cancelled_cb (GTask *task, GCancellable *external)
+{
+  ScreencastPortal *self = SCREENCAST_PORTAL (g_task_get_source_object (task));
+
+  /* Ensure no further callbacks are called. */
+  if (self->portal_signal_id)
+    {
+      g_dbus_connection_signal_unsubscribe (g_dbus_proxy_get_connection (self->screencast),
+                                            self->portal_signal_id);
+      self->portal_signal_id = 0;
+    }
+
+  /* Cancel the task and return it immediately. */
+  g_cancellable_cancel (self->cancellable);
+  g_task_return_error_if_cancelled (task);
+  g_object_unref (task);
+}
+
+static void
 screencast_portal_async_initable_init_async (GAsyncInitable     *initable,
                                              int                 io_priority,
                                              GCancellable       *cancellable,
@@ -369,19 +395,20 @@ screencast_portal_async_initable_init_async (GAsyncInitable     *initable,
                                              gpointer            user_data)
 {
   ScreencastPortal *self = SCREENCAST_PORTAL (initable);
-
-  g_autoptr(GCancellable) internal_cancellable = NULL;
-  //g_autoptr(GTask) task = NULL;
   GTask *task = NULL;
 
-  task = g_task_new (initable, cancellable, callback, user_data);
+  self->cancellable = g_cancellable_new ();
+  if (cancellable)
+    g_signal_connect_object (cancellable,
+                             "cancelled",
+                             (GCallback) init_cancelable_cancelled_cb,
+                             self->cancellable,
+                             G_CONNECT_SWAPPED);
 
-  /* Use an internal cancellable if we did not get one. */
-  if (!cancellable)
-    {
-      internal_cancellable = g_cancellable_new ();
-      cancellable = internal_cancellable;
-    }
+  if (g_cancellable_is_cancelled (cancellable))
+    g_cancellable_cancel (self->cancellable);
+
+  task = g_task_new (initable, cancellable, callback, user_data);
 
   g_dbus_proxy_new_for_bus (G_BUS_TYPE_SESSION,
                             G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES,
@@ -389,7 +416,7 @@ screencast_portal_async_initable_init_async (GAsyncInitable     *initable,
                             "org.freedesktop.portal.Desktop",
                             "/org/freedesktop/portal/desktop",
                             SCREEN_CAST_IFACE,
-                            cancellable,
+                            self->cancellable,
                             on_portal_screencast_proxy_acquired,
                             task);
 }
@@ -414,6 +441,9 @@ screencast_portal_finalize (GObject *object)
   ScreencastPortal *self = (ScreencastPortal *) object;
 
   G_OBJECT_CLASS (screencast_portal_parent_class)->finalize (object);
+
+  g_cancellable_cancel (self->cancellable);
+  g_clear_object (&self->cancellable);
 
   g_clear_pointer (&self->session_handle, g_free);
   if (self->portal_signal_id)
