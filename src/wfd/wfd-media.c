@@ -37,6 +37,8 @@ wfd_media_setup_rtpbin (GstRTSPMedia *media, GstElement *rtpbin)
                 "max-misorder-time", 50,
                 "do-lost", TRUE,
                 "do-sync-event", TRUE,
+                "buffer-mode", 0,
+                "latency", 40,
                 NULL);
 
   return TRUE;

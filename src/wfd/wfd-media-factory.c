@@ -121,7 +121,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
                     /*"adaptive-quantization", FALSE,*/
                     /*"max-slice-size", 5000,*/
                     /*"complexity", 0,*/
-                    /*"deblock", 1,*/
+                    /*"deblocking", 2,*/
                     NULL);
 
       /* Maybe try:
@@ -171,11 +171,12 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
   payloader = gst_element_factory_make ("rtpmp2tpay", "pay0");
   success &= gst_bin_add (bin, payloader);
   g_object_set (payloader,
-                /* Use a fixed ssrc as it must never change. */
                 "ssrc", 1,
                 /* Perfect is in relation to the input buffers, but we want the
                  * proper clock from when the packet was sent. */
                 "perfect-rtptime", FALSE,
+                "timestamp-offset", (guint) 0,
+                "seqnum-offset", (gint) 0,
                 NULL);
 
   success &= gst_element_link_many (source,
@@ -316,16 +317,14 @@ wfd_configure_media_element (GstBin *bin, WfdVideoCodec *codec, WfdResolution *r
   switch (encoder_impl)
     {
     case ENCODER_OPENH264:
+      /* We could set multi-thread/num-slices to codec->max_slice_num; but not sure
+       * if that works realiably, and simply using one slice is on the safe side
+       */
       g_object_set (encoder,
                     "enable-frame-skip", codec->frame_skipping_allowed,
-                    /* Take wifi throughput into consideration? */
                     "max-bitrate", wfd_video_codec_get_max_bitrate_kbit (codec) * 1024,
                     "bitrate", wfd_video_codec_get_max_bitrate_kbit (codec) * 1024,
-                    "num-slices", codec->max_slice_num,
                     NULL);
-
-      /* Maybe try:
-       *  - rate-control: 2, buffer*/
       break;
 
     case ENCODER_X264:
