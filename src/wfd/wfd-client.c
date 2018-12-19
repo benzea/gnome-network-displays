@@ -164,6 +164,8 @@ wfd_client_select_codec_and_resolution (WfdClient *self, WfdH264ProfileFlags pro
 
   self->params->selected_codec = wfd_video_codec_ref (codec);
 
+#if 0
+  /* The native resolution reported by some devices is just useless */
   if (codec->native)
     {
       self->params->selected_resolution = wfd_resolution_copy (codec->native);
@@ -183,6 +185,7 @@ wfd_client_select_codec_and_resolution (WfdClient *self, WfdH264ProfileFlags pro
         }
       else
         {
+#endif
           /* Create a standard full HD resolution if everything fails. */
           g_warning ("WfdClient: No resolution found, falling back to standard FullHD resolution.");
           self->params->selected_resolution = wfd_resolution_new ();
@@ -190,8 +193,11 @@ wfd_client_select_codec_and_resolution (WfdClient *self, WfdH264ProfileFlags pro
           self->params->selected_resolution->height = 1080;
           self->params->selected_resolution->refresh_rate = 30;
           self->params->selected_resolution->interlaced = FALSE;
+#if 0
         }
     }
+#endif
+  g_debug ("selected resolution %i, %i @%i", self->params->selected_resolution->width, self->params->selected_resolution->height, self->params->selected_resolution->refresh_rate);
 }
 
 gboolean
