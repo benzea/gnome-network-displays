@@ -1,5 +1,6 @@
 #include <glib-object.h>
 #include <gst/rtsp/gstrtspmessage.h>
+#include <gst/video/video.h>
 #include "wfd-client.h"
 #include "wfd-media-factory.h"
 #include "wfd-media.h"
@@ -23,6 +24,7 @@ struct _WfdClient
   guint              keep_alive_source_id;
 
   WfdClientInitState init_state;
+  WfdMedia          *media;
   WfdParams         *params;
 };
 
@@ -206,6 +208,8 @@ wfd_client_configure_client_media (GstRTSPClient * client,
 
   g_return_val_if_fail (self->params->selected_codec, FALSE);
   g_return_val_if_fail (self->params->selected_resolution, FALSE);
+
+  self->media = WFD_MEDIA (media);
 
   element = gst_rtsp_media_get_element (media);
   wfd_configure_media_element (GST_BIN (element), self->params->selected_codec, self->params->selected_resolution);
@@ -402,8 +406,32 @@ wfd_client_new_session (GstRTSPClient *client, GstRTSPSession *session)
 static GstRTSPResult
 wfd_client_params_set (GstRTSPClient *client, GstRTSPContext *ctx)
 {
+  WfdClient *self = WFD_CLIENT (client);
+
   gst_rtsp_message_init_response (ctx->response, GST_RTSP_STS_OK,
       gst_rtsp_status_as_text (GST_RTSP_STS_OK), ctx->request);
+
+  /* Force a key unit event. */
+  if (self->media)
+    {
+      GstRTSPStream *stream;
+      g_autoptr(GstPad) srcpad = NULL;
+      g_autoptr(GstEvent) event = NULL;
+
+      stream = gst_rtsp_media_get_stream (GST_RTSP_MEDIA (self->media), 0);
+      if (!stream)
+        return GST_RTSP_OK;
+
+      srcpad = gst_rtsp_stream_get_srcpad (stream);
+
+       g_debug ("Forcing a keyframe!");
+       event = gst_video_event_new_upstream_force_key_unit (GST_CLOCK_TIME_NONE, TRUE, 0);
+       gst_pad_send_event (srcpad, g_steal_pointer (&event));
+    }
+  else
+    {
+      g_debug ("Cannot force key frame currently, no media!");
+    }
 
   return GST_RTSP_OK;
 }

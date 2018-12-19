@@ -17,6 +17,7 @@ wfd_server_sources = [
 #)
 
 wfd_server_deps = [
+  dependency('gstreamer-video-1.0', version: '>= 1.14'),
   dependency('gstreamer-rtsp-1.0', version: '>= 1.14'),
   dependency('gstreamer-rtsp-server-1.0', version: '>= 1.14'),
 ]
