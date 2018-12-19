@@ -399,6 +399,15 @@ wfd_client_new_session (GstRTSPClient *client, GstRTSPSession *session)
     self->keep_alive_source_id = g_timeout_add_seconds (25, wfd_client_keep_alive_timeout, client);
 }
 
+static GstRTSPResult
+wfd_client_params_set (GstRTSPClient *client, GstRTSPContext *ctx)
+{
+  gst_rtsp_message_init_response (ctx->response, GST_RTSP_STS_OK,
+      gst_rtsp_status_as_text (GST_RTSP_STS_OK), ctx->request);
+
+  return GST_RTSP_OK;
+}
+
 static gboolean
 wfd_client_idle_wfd_query_params (gpointer user_data)
 {
@@ -495,7 +504,7 @@ wfd_client_class_init (WfdClientClass *klass)
   client_class->handle_response = wfd_client_handle_response;
   client_class->make_path_from_uri = wfd_client_make_path_from_uri;
   client_class->new_session = wfd_client_new_session;
-  /*client_class->params_set = wfd_client_params_set;*/
+  client_class->params_set = wfd_client_params_set;
   client_class->pre_options_request = wfd_client_pre_options_request;
   client_class->send_message = wfd_client_send_message;
 }
