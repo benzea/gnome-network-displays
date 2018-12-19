@@ -291,6 +291,10 @@ wfd_video_codec_new_from_desc (gint native, const gchar *descr)
   res->max_slice_num = (tmp & 0x1ff) + 1;
   res->max_slice_size_ratio = (tmp >> 10) & 0x7;
 
+  /* If min-slice-size is 0, then the sink does not support slicing. */
+  if (res->min_slice_size == 0)
+    res->max_slice_num = 1;
+
   /* frame_rate_ctrl_sup */
   tmp = g_ascii_strtoll (tokens[8], NULL, 16);
   res->frame_skipping_allowed = tmp & 0x1;
