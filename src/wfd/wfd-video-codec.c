@@ -127,7 +127,7 @@ sup_for_resolution (gint table, const WfdResolution *resolution)
   else if (table == RESOLUTION_TABLE_VESA)
     {
       resolutions = vesa_resolutions;
-      length = G_N_ELEMENTS (hh_resolutions);
+      length = G_N_ELEMENTS (vesa_resolutions);
     }
   else
     {
