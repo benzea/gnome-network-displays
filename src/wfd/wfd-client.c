@@ -413,30 +413,67 @@ static GstRTSPResult
 wfd_client_params_set (GstRTSPClient *client, GstRTSPContext *ctx)
 {
   WfdClient *self = WFD_CLIENT (client);
+  g_autofree gchar *body_str = NULL;
+  g_auto(GStrv) lines = NULL;
+  gchar **line = NULL;
 
   gst_rtsp_message_init_response (ctx->response, GST_RTSP_STS_OK,
       gst_rtsp_status_as_text (GST_RTSP_STS_OK), ctx->request);
 
-  /* Force a key unit event. */
-  if (self->media)
+  if (ctx->request->body == NULL || ctx->request->body_size == 0)
+    return GST_RTSP_OK;
+
+  body_str = g_strndup ((gchar *) ctx->request->body, ctx->request->body_size);
+  lines = g_strsplit (body_str, "\n", 0);
+
+  for (line = lines; *line; line++)
     {
-      GstRTSPStream *stream;
-      g_autoptr(GstPad) srcpad = NULL;
-      g_autoptr(GstEvent) event = NULL;
+      g_auto(GStrv) split_line = NULL;
+      gchar *option;
+      G_GNUC_UNUSED gchar *value;
 
-      stream = gst_rtsp_media_get_stream (GST_RTSP_MEDIA (self->media), 0);
-      if (!stream)
-        return GST_RTSP_OK;
+      g_strstrip (*line);
 
-      srcpad = gst_rtsp_stream_get_srcpad (stream);
+      /* Ignore empty lines */
+      if (**line == '\0')
+        continue;
 
-       g_debug ("Forcing a keyframe!");
-       event = gst_video_event_new_upstream_force_key_unit (GST_CLOCK_TIME_NONE, TRUE, 0);
-       gst_pad_send_event (srcpad, g_steal_pointer (&event));
-    }
-  else
-    {
-      g_debug ("Cannot force key frame currently, no media!");
+      split_line = g_strsplit (*line, ":", 2);
+
+      option = g_strstrip (split_line[0]);
+      if (split_line[1])
+        value = g_strstrip (split_line[1]);
+      else
+        value = NULL;
+
+      if (g_str_equal (option, "wfd_idr_request"))
+        {
+          /* Force a key unit event. */
+          if (self->media)
+            {
+              GstRTSPStream *stream;
+              g_autoptr(GstPad) srcpad = NULL;
+              g_autoptr(GstEvent) event = NULL;
+
+              stream = gst_rtsp_media_get_stream (GST_RTSP_MEDIA (self->media), 0);
+              if (!stream)
+                return GST_RTSP_OK;
+
+              srcpad = gst_rtsp_stream_get_srcpad (stream);
+
+              g_debug ("Forcing a keyframe!");
+              event = gst_video_event_new_upstream_force_key_unit (GST_CLOCK_TIME_NONE, TRUE, 0);
+              gst_pad_send_event (srcpad, g_steal_pointer (&event));
+            }
+          else
+           {
+             g_debug ("Cannot force key frame currently, no media!");
+           }
+        }
+      else
+        {
+          g_debug ("Ignoring unknown parameter %s", option);
+        }
     }
 
   return GST_RTSP_OK;
