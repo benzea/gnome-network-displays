@@ -27,6 +27,8 @@ static const gchar * params_m3_optional[] = {
 
 static const gchar *params_m3_query_extra[] = {
   "wfd_display_edid",
+  "wfd_idr_request_capability",
+  "microsoft_cursor",
 };
 
 /**
@@ -297,6 +299,39 @@ wfd_params_from_sink (WfdParams *self, const guint8 *body, gsize body_size)
               split_value[1][i * 2] = '\0';
               self->edid->data[i] = byte;
             }
+        }
+      else if (g_str_equal (option, "wfd_idr_request_capability"))
+        {
+          /* Assume IDR request capable if it is the string one */
+          self->idr_request_capability = g_str_equal (value, "1");
+        }
+      else if (g_str_equal (option, "microsoft_cursor"))
+        {
+          g_auto(GStrv) split_value = NULL;
+
+          self->ms_cursor_capability = FALSE;
+
+          if (g_str_equal (value, "none"))
+            continue;
+
+          split_value = g_strsplit (value, " ", 5);
+          if (g_strv_length (split_value) != 4)
+            {
+              g_warning ("WfdParams: Unknown microsoft_cursor value %s", value);
+              continue;
+            }
+
+          /* The first argument is either "none" or "full" where "full" means that
+           * the hardware supports XOR blending (which we don't support). */
+          self->ms_cursor_width = g_ascii_strtoll (split_value[1], NULL, 16);
+          self->ms_cursor_height = g_ascii_strtoll (split_value[2], NULL, 16);
+          self->ms_cursor_port = g_ascii_strtoll (split_value[3], NULL, 16);
+
+          /* Do some sanity checks, and set capable to TRUE if everything is good. */
+          if (self->ms_cursor_width >= 32 && self->ms_cursor_height >= 32 && self->ms_cursor_port >= 0)
+            self->ms_cursor_capability = TRUE;
+          else
+            g_warning ("WfdParams: microsoft_cursor extension has odd values: \"%s\"", value);
         }
       else
         {

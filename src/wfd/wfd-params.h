@@ -15,6 +15,12 @@ struct _WfdParams
   guint16        secondary_rtp_port;
   GByteArray    *edid;
 
+  gboolean       idr_request_capability;
+  gboolean       ms_cursor_capability;
+  guint16        ms_cursor_width;
+  guint16        ms_cursor_height;
+  guint16        ms_cursor_port;
+
   WfdVideoCodec *selected_codec;
   WfdResolution *selected_resolution;
 
