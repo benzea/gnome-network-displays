@@ -4,6 +4,8 @@
 struct _WfdMedia
 {
   GstRTSPMedia parent_instance;
+
+  GstPipeline *ms_cursor_pipeline;
 };
 
 G_DEFINE_TYPE (WfdMedia, wfd_media, GST_TYPE_RTSP_MEDIA)
@@ -24,6 +26,10 @@ wfd_media_new (void)
 static void
 wfd_media_finalize (GObject *object)
 {
+  WfdMedia *self = WFD_MEDIA (object);
+
+  g_clear_object (&self->ms_cursor_pipeline);
+
   G_OBJECT_CLASS (wfd_media_parent_class)->finalize (object);
 }
 
@@ -42,6 +48,12 @@ wfd_media_setup_rtpbin (GstRTSPMedia *media, GstElement *rtpbin)
                 NULL);
 
   return TRUE;
+}
+
+void
+wfd_media_create_cursor_pipeline (WfdMedia *self)
+{
+
 }
 
 static void

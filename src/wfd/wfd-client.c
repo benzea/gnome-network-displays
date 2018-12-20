@@ -26,6 +26,10 @@ struct _WfdClient
   WfdClientInitState init_state;
   WfdMedia          *media;
   WfdParams         *params;
+
+  GSocket           *cursor_socket;
+  guint              test_id;
+  guint16            cursor_seq;
 };
 
 G_DEFINE_TYPE (WfdClient, wfd_client, GST_TYPE_RTSP_CLIENT)
@@ -68,6 +72,10 @@ wfd_client_finalize (GObject *object)
   if (self->keep_alive_source_id)
     g_source_remove (self->keep_alive_source_id);
   self->keep_alive_source_id = 0;
+
+  if (self->test_id)
+    g_source_remove (self->test_id);
+  g_clear_object (&self->cursor_socket);
 
   G_OBJECT_CLASS (wfd_client_parent_class)->finalize (object);
 }
@@ -201,6 +209,109 @@ wfd_client_select_codec_and_resolution (WfdClient *self, WfdH264ProfileFlags pro
 }
 
 gboolean
+rand_cursor_update (gpointer user_data)
+{
+  WfdClient *self = user_data;
+  gint x, y;
+  g_autoptr(GByteArray) msg = NULL;
+  guint16 seq_be;
+  guint16 msg_size, msg_size_be;
+  gint16 x_be, y_be;
+  guint16 cursor;
+
+  x = g_random_int_range (0, 1000);
+  y = g_random_int_range (0, 1000);
+  cursor = g_random_int_range (1, 10);
+
+  g_print ("doing random cursor update to %i, %i\n", x, y);
+
+  /* No update in this case, but update if cursor is 1-3 (i.e. we have
+   * an image in /tmp/ for it. */
+  if (cursor > 3)
+    cursor = 0;
+
+  msg = g_byte_array_sized_new (200);
+
+  /* Fake an RTP header, bits 0-15, is version and other static things */
+  g_byte_array_append (msg, (guint8*) "\x80\x00", 2);
+  /* 16 - 31, sequence number */
+  seq_be = GUINT16_SWAP_LE_BE (self->cursor_seq);
+  g_byte_array_append (msg, (guint8*) &seq_be, sizeof(seq_be));
+  /* And another 64bit zeros (32bit timestamp and 32bit ssrc identifier) */
+  g_byte_array_append (msg, (guint8*) "\x00\x00\x00\x00\x00\x00\x00\x00", 8);
+
+
+  if (cursor == 0)
+    {
+      /* 0x01 position update, 0x02 shape update, 0x03 shape continuation. */
+      g_byte_array_append (msg, (guint8*) "\x01", 1);
+
+      /* message size is always 0x07 for updates */
+      msg_size = 0x07;
+      msg_size_be = GUINT16_SWAP_LE_BE (msg_size);
+      g_byte_array_append (msg, (guint8*) &msg_size_be, sizeof(msg_size_be));
+
+      x_be = GUINT16_SWAP_LE_BE (x);
+      y_be = GUINT16_SWAP_LE_BE (y);
+      g_byte_array_append (msg, (guint8*) &x_be, sizeof(x_be));
+      g_byte_array_append (msg, (guint8*) &y_be, sizeof(y_be));
+    }
+  else
+    {
+      g_autofree gchar *cursor_file = NULL;
+      g_autofree gchar *cursor_img = NULL;
+      gsize cursor_len = 0;
+      guint32 cursor_len_be;
+      guint16 cursor_img_id_be;
+
+      /* Shape update, assume it fits */
+      g_byte_array_append (msg, (guint8*) "\x02", 1);
+      cursor_file = g_strdup_printf ("/tmp/test-cursor%d.png", cursor);
+      g_file_get_contents (cursor_file, &cursor_img, &cursor_len, NULL);
+      g_assert (cursor_len > 0);
+
+      /* Assume the cursor fits into the packet; if it doesn't then we need
+       * to send multiple packages until it fits. msg_size then is the size
+       * of each package while cursor size is constant. */
+      cursor_len_be = GUINT32_SWAP_LE_BE (cursor_len);
+      msg_size = 18 + cursor_len;
+      msg_size_be = GUINT16_SWAP_LE_BE (msg_size);
+
+      g_byte_array_append (msg, (guint8*) &msg_size_be, sizeof(msg_size_be));
+      g_byte_array_append (msg, (guint8*) &cursor_len_be, sizeof(cursor_len_be));
+
+      cursor_img_id_be = GUINT16_SWAP_LE_BE (cursor);
+      g_byte_array_append (msg, (guint8*) &cursor_img_id_be, sizeof(cursor_img_id_be));
+
+      x_be = GUINT16_SWAP_LE_BE (x);
+      y_be = GUINT16_SWAP_LE_BE (y);
+      g_byte_array_append (msg, (guint8*) &x_be, sizeof(x_be));
+      g_byte_array_append (msg, (guint8*) &y_be, sizeof(y_be));
+
+      /* Image type, 0x01: disabled, 0x02 masked color, 0x03: color */
+      g_byte_array_append (msg, (guint8*) "\x03", 1);
+
+      /* Hotspot */
+      x_be = GUINT16_SWAP_LE_BE (5);
+      y_be = GUINT16_SWAP_LE_BE (5);
+      g_byte_array_append (msg, (guint8*) &x_be, sizeof(x_be));
+      g_byte_array_append (msg, (guint8*) &y_be, sizeof(y_be));
+
+      g_byte_array_append (msg, (guint8*) cursor_img, cursor_len);
+    }
+
+  g_socket_send (self->cursor_socket,
+                 (const gchar*) msg->data,
+                 msg->len,
+                 NULL,
+                 NULL);
+
+  self->cursor_seq += 1;
+
+  return TRUE;
+}
+
+gboolean
 wfd_client_configure_client_media (GstRTSPClient * client,
                                    GstRTSPMedia * media, GstRTSPStream * stream,
                                    GstRTSPContext * ctx)
@@ -225,6 +336,41 @@ wfd_client_configure_client_media (GstRTSPClient * client,
   thread_pool = gst_rtsp_client_get_thread_pool (client);
   thread = gst_rtsp_thread_pool_get_thread (thread_pool, GST_RTSP_THREAD_TYPE_MEDIA, ctx);
   gst_rtsp_media_prepare (media, g_steal_pointer (&thread));
+
+
+  if (self->params->ms_cursor_capability)
+    {
+      GstRTSPConnection *connection;
+      GSocket *socket;
+      g_autoptr(GSocketAddress) sock_addr;
+      GInetAddress *inet_addr;
+      g_autoptr(GSocketAddress) address = NULL;
+
+      self->cursor_socket = g_socket_new (G_SOCKET_FAMILY_IPV6,
+                                          G_SOCKET_TYPE_DATAGRAM,
+                                          G_SOCKET_PROTOCOL_UDP,
+                                          NULL);
+
+      g_socket_set_blocking (self->cursor_socket, FALSE);
+
+      connection = gst_rtsp_client_get_connection (client);
+      socket = gst_rtsp_connection_get_read_socket (connection);
+      sock_addr = g_socket_get_remote_address (socket, NULL);
+      inet_addr = g_inet_socket_address_get_address (G_INET_SOCKET_ADDRESS (sock_addr));
+
+      gst_rtsp_client_get_connection (client);
+      address = g_inet_socket_address_new (inet_addr, self->params->ms_cursor_port);
+      if (!g_socket_connect (self->cursor_socket, address, NULL, NULL))
+        {
+          g_warning ("Failed to connect to socket");
+
+          g_clear_object (&self->cursor_socket);
+          return res;
+        }
+
+      self->test_id = g_timeout_add (500, rand_cursor_update, self);
+
+    }
 
   return res;
 }
