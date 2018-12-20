@@ -1,7 +1,7 @@
 #pragma once
 
 #include <gst/rtsp-server/rtsp-media-factory.h>
-#include "wfd-video-codec.h"
+#include "wfd-params.h"
 
 G_BEGIN_DECLS
 
@@ -13,7 +13,6 @@ WfdMediaFactory * wfd_media_factory_new (void);
 
 /* Just because it is convenient to have next to the pipeline creation code */
 void wfd_configure_media_element (GstBin        *bin,
-                                  WfdVideoCodec *codec,
-                                  WfdResolution *resolution);
+                                  WfdParams     *params);
 
 G_END_DECLS

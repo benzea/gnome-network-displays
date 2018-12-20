@@ -292,14 +292,22 @@ wfd_media_factory_create_pipeline (GstRTSPMediaFactory *factory, GstRTSPMedia *m
 }
 
 void
-wfd_configure_media_element (GstBin *bin, WfdVideoCodec *codec, WfdResolution *resolution)
+wfd_configure_media_element (GstBin *bin, WfdParams *params)
 {
   g_autoptr(GstCaps) caps = NULL;
   g_autoptr(GstElement) sizefilter = NULL;
   g_autoptr(GstElement) encoder = NULL;
   g_autoptr(GstElement) selector_interlace = NULL;
   g_autoptr(GstPad) selector_interlace_pad = NULL;
+  WfdVideoCodec *codec = params->selected_codec;
+  WfdResolution *resolution = params->selected_resolution;
   WfdH264Encoder encoder_impl;
+  guint gop_size = resolution->refresh_rate;
+
+  /* Decrease the number of keyframes if the device is able to request
+   * IDRs by itself. */
+  if (params->idr_request_capability)
+    gop_size = 10 * resolution->refresh_rate;
 
   caps = gst_caps_new_simple ("video/x-raw",
                               "framerate", GST_TYPE_FRACTION, resolution->refresh_rate, 1,
@@ -324,6 +332,7 @@ wfd_configure_media_element (GstBin *bin, WfdVideoCodec *codec, WfdResolution *r
                     "enable-frame-skip", codec->frame_skipping_allowed,
                     "max-bitrate", wfd_video_codec_get_max_bitrate_kbit (codec) * 1024,
                     "bitrate", wfd_video_codec_get_max_bitrate_kbit (codec) * 1024,
+                    "gop-size", gop_size,
                     NULL);
       break;
 
@@ -337,7 +346,7 @@ wfd_configure_media_element (GstBin *bin, WfdVideoCodec *codec, WfdResolution *r
                     /* "pass", "cbr", */
                     "b-adapt", FALSE,
                     "bframes", 0,
-                    "key-int-max", resolution->refresh_rate,
+                    "key-int-max", gop_size,
                     "interlaced", resolution->interlaced,
                     "bitrate",  wfd_video_codec_get_max_bitrate_kbit (codec),
                     "max-rc-lookahead", 0,

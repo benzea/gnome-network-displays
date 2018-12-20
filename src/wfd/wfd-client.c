@@ -218,7 +218,7 @@ wfd_client_configure_client_media (GstRTSPClient * client,
   self->media = WFD_MEDIA (media);
 
   element = gst_rtsp_media_get_element (media);
-  wfd_configure_media_element (GST_BIN (element), self->params->selected_codec, self->params->selected_resolution);
+  wfd_configure_media_element (GST_BIN (element), self->params);
 
   res = GST_RTSP_CLIENT_CLASS (wfd_client_parent_class)->configure_client_media (client, media, stream, ctx);
 
