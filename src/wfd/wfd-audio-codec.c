@@ -116,6 +116,34 @@ wfd_audio_codec_new_from_desc (const gchar   *descr)
   return g_steal_pointer (&res);
 }
 
+gchar*
+wfd_audio_get_descriptor (WfdAudioCodec *self)
+{
+  const gchar *type;
+
+  if (self == NULL)
+    return g_strdup ("none");
+
+  switch (self->type)
+    {
+    case WFD_AUDIO_LPCM:
+      type = "LPCM";
+      break;
+    case WFD_AUDIO_AAC:
+      type = "AAC";
+      break;
+    case WFD_AUDIO_AC3:
+      type = "AC3";
+      break;
+    default:
+      g_assert_not_reached ();
+      return g_strdup ("none");
+    }
+
+  return g_strdup_printf ("%s %08X %02X", type, self->modes, 0);
+}
+
+
 void
 wfd_audio_codec_dump (WfdAudioCodec *self)
 {

@@ -32,6 +32,7 @@ WfdAudioCodec     *wfd_audio_codec_ref      (WfdAudioCodec *self);
 void               wfd_audio_codec_unref    (WfdAudioCodec *self);
 
 WfdAudioCodec     *wfd_audio_codec_new_from_desc (const gchar   *descr);
+gchar             *wfd_audio_get_descriptor      (WfdAudioCodec *self);
 void               wfd_audio_codec_dump          (WfdAudioCodec *self);
 
 
