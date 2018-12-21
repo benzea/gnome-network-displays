@@ -306,6 +306,16 @@ server_create_source_cb (ScreencastWFDP2PSink *sink, WfdServer *server)
   return res;
 }
 
+static GstElement *
+server_create_audio_source_cb (ScreencastWFDP2PSink *sink, WfdServer *server)
+{
+  GstElement *res;
+
+  g_signal_emit_by_name (sink, "create-audio-source", &res);
+
+  return res;
+}
+
 static void
 p2p_connected (GObject      *source_object,
                GAsyncResult *res,
@@ -361,6 +371,12 @@ p2p_connected (GObject      *source_object,
   g_signal_connect_object (sink->server,
                            "create-source",
                            (GCallback) server_create_source_cb,
+                           sink,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (sink->server,
+                           "create-audio-source",
+                           (GCallback) server_create_audio_source_cb,
                            sink,
                            G_CONNECT_SWAPPED);
 

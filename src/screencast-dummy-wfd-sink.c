@@ -181,6 +181,16 @@ server_create_source_cb (ScreencastDummyWFDSink *sink, WfdServer *server)
   return res;
 }
 
+static GstElement *
+server_create_audio_source_cb (ScreencastDummyWFDSink *sink, WfdServer *server)
+{
+  GstElement *res;
+
+  g_signal_emit_by_name (sink, "create-audio-source", &res);
+
+  return res;
+}
+
 static ScreencastSink *
 screencast_dummy_wfd_sink_sink_start_stream (ScreencastSink *sink)
 {
@@ -213,6 +223,12 @@ screencast_dummy_wfd_sink_sink_start_stream (ScreencastSink *sink)
   g_signal_connect_object (self->server,
                            "create-source",
                            (GCallback) server_create_source_cb,
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (self->server,
+                           "create-audio-source",
+                           (GCallback) server_create_audio_source_cb,
                            self,
                            G_CONNECT_SWAPPED);
 

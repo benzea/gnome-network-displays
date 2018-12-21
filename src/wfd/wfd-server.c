@@ -20,6 +20,7 @@ static GParamSpec *properties[N_PROPS];
 
 enum {
   SIGNAL_CREATE_SOURCE,
+  SIGNAL_CREATE_AUDIO_SOURCE,
   NR_SIGNALS
 };
 
@@ -163,6 +164,13 @@ wfd_server_class_init (WfdServerClass *klass)
                   g_signal_accumulator_first_wins, NULL,
                   NULL,
                   GST_TYPE_ELEMENT, 0);
+
+  signals[SIGNAL_CREATE_AUDIO_SOURCE] =
+    g_signal_new ("create-audio-source", WFD_TYPE_SERVER, G_SIGNAL_RUN_LAST,
+                  0,
+                  g_signal_accumulator_first_wins, NULL,
+                  NULL,
+                  GST_TYPE_ELEMENT, 0);
 }
 
 static gboolean
@@ -188,6 +196,16 @@ factory_source_create_cb (WfdMediaFactory *factory, WfdServer *self)
   return res;
 }
 
+static GstElement *
+factory_audio_source_create_cb (WfdMediaFactory *factory, WfdServer *self)
+{
+  GstElement *res;
+
+  g_signal_emit (self, signals[SIGNAL_CREATE_AUDIO_SOURCE], 0, &res);
+
+  return res;
+}
+
 static void
 wfd_server_init (WfdServer *self)
 {
@@ -201,6 +219,12 @@ wfd_server_init (WfdServer *self)
   g_signal_connect_object (factory,
                            "create-source",
                            (GCallback) factory_source_create_cb,
+                           self,
+                           0);
+
+  g_signal_connect_object (factory,
+                           "create-audio-source",
+                           (GCallback) factory_audio_source_create_cb,
                            self,
                            0);
 

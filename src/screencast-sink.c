@@ -34,6 +34,12 @@ screencast_sink_default_init (ScreencastSinkIface *iface)
                 NULL,
                 GST_TYPE_ELEMENT, 0);
 
+  g_signal_new ("create-audio-source", SCREENCAST_TYPE_SINK, G_SIGNAL_RUN_LAST,
+                0,
+                g_signal_accumulator_first_wins, NULL,
+                NULL,
+                GST_TYPE_ELEMENT, 0);
+
   g_object_interface_install_property (iface,
                                        g_param_spec_string ("display-name",
                                                             "Display Name",

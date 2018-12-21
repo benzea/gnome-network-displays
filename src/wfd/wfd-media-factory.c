@@ -26,6 +26,7 @@ static GParamSpec *properties[N_PROPS];
 
 enum {
   SIGNAL_CREATE_SOURCE,
+  SIGNAL_CREATE_AUDIO_SOURCE,
   NR_SIGNALS
 };
 
@@ -451,6 +452,13 @@ wfd_media_factory_class_init (WfdMediaFactoryClass *klass)
 
   signals[SIGNAL_CREATE_SOURCE] =
     g_signal_new ("create-source", WFD_TYPE_MEDIA_FACTORY, G_SIGNAL_RUN_LAST,
+                  0,
+                  g_signal_accumulator_first_wins, NULL,
+                  NULL,
+                  GST_TYPE_ELEMENT, 0);
+
+  signals[SIGNAL_CREATE_AUDIO_SOURCE] =
+    g_signal_new ("create-audio-source", WFD_TYPE_MEDIA_FACTORY, G_SIGNAL_RUN_LAST,
                   0,
                   g_signal_accumulator_first_wins, NULL,
                   NULL,

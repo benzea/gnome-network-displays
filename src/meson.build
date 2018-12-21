@@ -16,6 +16,7 @@ gnome_screencast_sources = [
   'screencast-dummy-provider.c',
   'screencast-dummy-wfd-sink.c',
   'screencast-portal.c',
+  'screencast-pulseaudio.c',
 ]
 
 enum_headers = files('screencast-sink.h')
@@ -30,6 +31,7 @@ gnome_screencast_deps = [
   dependency('gtk+-3.0', version: '>= 3.22'),
   dependency('libnm', version: '>= 1.15'),
   dependency('gstreamer-1.0', version: '>= 1.14'),
+  dependency('libpulse-mainloop-glib'),
 ]
 
 gnome_screencast_deps += wfd_server_deps

@@ -28,6 +28,7 @@
 #include <gst/gst.h>
 
 #include "screencast-portal.h"
+#include "screencast-pulseaudio.h"
 
 struct _GnomeScreencastWindow
 {
@@ -38,6 +39,8 @@ struct _GnomeScreencastWindow
 
   ScreencastPortal *portal;
   gboolean          use_x11;
+
+  ScreencastPulseaudio  *pulse;
 
   GCancellable   *cancellable;
 
@@ -99,6 +102,19 @@ sink_create_source_cb (GnomeScreencastWindow * self, ScreencastSink * sink)
                                                                       "src")));
 
   return GST_ELEMENT (bin);
+}
+
+static GstElement *
+sink_create_audio_source_cb (GnomeScreencastWindow * self, ScreencastSink * sink)
+{
+  GstElement *res;
+
+  if (!self->pulse)
+    return NULL;
+
+  res = screencast_pulseaudio_get_source (self->pulse);
+
+  return res;
 }
 
 static void
@@ -194,6 +210,12 @@ find_sink_list_row_activated_cb (GnomeScreencastWindow *self, ScreencastSinkRow 
                            G_CONNECT_SWAPPED);
 
   g_signal_connect_object (self->stream_sink,
+                           "create-audio-source",
+                           (GCallback) sink_create_audio_source_cb,
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (self->stream_sink,
                            "notify::state",
                            (GCallback) sink_notify_state_cb,
                            self,
@@ -276,6 +298,28 @@ screencast_portal_init_async_cb (GObject      *source_object,
 }
 
 static void
+screencast_pulseaudio_init_async_cb (GObject      *source_object,
+                                     GAsyncResult *res,
+                                     gpointer      user_data)
+{
+  GnomeScreencastWindow *window;
+
+  g_autoptr(GError) error = NULL;
+
+  if (!g_async_initable_init_finish (G_ASYNC_INITABLE (source_object), res, &error))
+    {
+      if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        g_warning ("Error initializing pulse audio sink: %s", error->message);
+
+      g_object_unref (source_object);
+      return;
+    }
+
+  window = GNOME_SCREENCAST_WINDOW (user_data);
+  window->pulse = SCREENCAST_PULSEAUDIO (source_object);
+}
+
+static void
 stream_stop_clicked_cb (GnomeScreencastWindow *self)
 {
   if (!self->stream_sink)
@@ -288,6 +332,8 @@ static void
 gnome_screencast_window_init (GnomeScreencastWindow *self)
 {
   ScreencastPortal *portal;
+  ScreencastPulseaudio *pulse;
+
   gtk_widget_init_template (GTK_WIDGET (self));
 
   self->meta_provider = screencast_meta_provider_new ();
@@ -336,5 +382,12 @@ gnome_screencast_window_init (GnomeScreencastWindow *self)
                                G_PRIORITY_LOW,
                                self->cancellable,
                                screencast_portal_init_async_cb,
+                               self);
+
+  pulse = screencast_pulseaudio_new ();
+  g_async_initable_init_async (G_ASYNC_INITABLE (pulse),
+                               G_PRIORITY_LOW,
+                               self->cancellable,
+                               screencast_pulseaudio_init_async_cb,
                                self);
 }
