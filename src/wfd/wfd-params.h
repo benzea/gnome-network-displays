@@ -2,6 +2,7 @@
 
 #include <glib-object.h>
 #include "wfd-video-codec.h"
+#include "wfd-audio-codec.h"
 
 G_BEGIN_DECLS
 
@@ -23,8 +24,10 @@ struct _WfdParams
 
   WfdVideoCodec *selected_codec;
   WfdResolution *selected_resolution;
+  WfdAudioCodec *selected_audio_codec;
 
   GPtrArray     *video_codecs;
+  GPtrArray     *audio_codecs;
 };
 
 typedef struct _WfdParams WfdParams;

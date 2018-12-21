@@ -57,6 +57,8 @@ wfd_params_new (void)
   basic_codec = wfd_video_codec_new_from_desc (7 << 3, "01 01 00000081 00000000 00000000 00 0000 0000 00 none none");
   g_ptr_array_add (self->video_codecs, basic_codec);
 
+  self->audio_codecs = g_ptr_array_new_with_free_func ((GDestroyNotify) wfd_audio_codec_unref);
+
   /* Set a default resolution (for testing purposes) */
   self->selected_codec = wfd_video_codec_ref (basic_codec);
   self->selected_resolution = wfd_resolution_copy (basic_codec->native);
@@ -100,10 +102,20 @@ wfd_params_copy (WfdParams *self)
       g_ptr_array_add (copy->video_codecs, new_codec);
     }
 
+  for (guint i = 0; i < self->audio_codecs->len; i++)
+    {
+      WfdAudioCodec *codec = (WfdAudioCodec *) g_ptr_array_index (self->audio_codecs, i);
+      WfdAudioCodec *new_codec = wfd_audio_codec_copy (codec);
+
+      g_ptr_array_add (copy->audio_codecs, new_codec);
+    }
+
   if (self->selected_codec)
     copy->selected_codec = wfd_video_codec_copy (self->selected_codec);
   if (self->selected_resolution)
     copy->selected_resolution = wfd_resolution_copy (self->selected_resolution);
+  if (self->selected_audio_codec)
+    copy->selected_audio_codec = wfd_audio_codec_copy (self->selected_audio_codec);
 
   return copy;
 }
@@ -122,8 +134,10 @@ wfd_params_free (WfdParams *self)
 
   g_clear_pointer (&self->selected_codec, wfd_video_codec_unref);
   g_clear_pointer (&self->selected_resolution, wfd_resolution_free);
+  g_clear_pointer (&self->selected_audio_codec, wfd_audio_codec_unref);
 
   g_clear_pointer (&self->video_codecs, g_ptr_array_unref);
+  g_clear_pointer (&self->audio_codecs, g_ptr_array_unref);
   g_clear_pointer (&self->edid, g_byte_array_unref);
   g_clear_pointer (&self->profile, g_free);
 
@@ -260,8 +274,35 @@ wfd_params_from_sink (WfdParams *self, const guint8 *body, gsize body_size)
         }
       else if (g_str_equal (option, "wfd_audio_codecs"))
         {
-          /* TODO: Implement */
-          g_warning ("WfdParams: Audio codec parsing not yet implemented!");
+          g_auto(GStrv) codec_descriptors = NULL;
+          char **codec_descriptor;
+
+          /* Clear audio codecs to fill them up again. */
+          g_clear_pointer (&self->selected_audio_codec, wfd_audio_codec_unref);
+          g_ptr_array_unref (self->audio_codecs);
+          self->audio_codecs = g_ptr_array_new_with_free_func ((GDestroyNotify) wfd_audio_codec_unref);
+
+          if (g_str_equal (value, "none"))
+            continue;
+
+          codec_descriptors = g_strsplit (value, ",", 0);
+          for (codec_descriptor = codec_descriptors; *codec_descriptor; codec_descriptor++)
+            {
+              g_autoptr(WfdAudioCodec) codec = NULL;
+
+              g_strstrip (*codec_descriptor);
+              codec = wfd_audio_codec_new_from_desc (*codec_descriptor);
+              if (codec)
+                {
+                  g_debug ("Add audio codec to params:");
+                  wfd_audio_codec_dump (codec);
+                  g_ptr_array_add (self->audio_codecs, g_steal_pointer (&codec));
+                }
+              else
+                {
+                  g_warning ("WfdParams: Could not parse codec descriptor: %s", *codec_descriptor);
+                }
+            }
         }
       else if (g_str_equal (option, "wfd_display_edid"))
         {

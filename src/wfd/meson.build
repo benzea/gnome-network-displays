@@ -6,6 +6,7 @@ wfd_server_sources = [
   'wfd-params.c',
   'wfd-resolution.c',
   'wfd-server.c',
+  'wfd-audio-codec.c',
   'wfd-video-codec.c',
 ]
 
