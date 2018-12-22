@@ -74,7 +74,7 @@ provider_sink_added_cb (ScreencastMetaProvider *meta_provider, ScreencastSink *s
   g_object_get (sink, "matches", &sink_matches, NULL);
   g_assert (sink_matches != NULL);
 
-  meta_sinks = g_ptr_array_new_with_free_func (g_object_unref);
+  meta_sinks = g_ptr_array_new ();
 
   for (gint i = 0; i < sink_matches->len; i++)
     {
