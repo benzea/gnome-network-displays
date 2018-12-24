@@ -337,6 +337,7 @@ p2p_connected (GObject      *source_object,
 
       g_warning ("Error activating connection: %s", error->message);
       sink = SCREENCAST_WFD_P2P_SINK (user_data);
+      screencast_wfd_p2p_sink_sink_stop_stream_int (sink);
       sink->state = SCREENCAST_SINK_STATE_ERROR;
       g_object_notify (G_OBJECT (sink), "state");
       return;
