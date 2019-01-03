@@ -157,6 +157,7 @@ on_pa_screencast_sink_got_info (pa_context *c,
   self->operation = pa_context_load_module (self->context,
                                             "module-null-sink",
                                             "sink_name=gnome_screencast "
+                                            "rate=48000 "
                                             "sink_properties=device.description=\"GNOME-Screencast\""
                                                             "device.class=\"sound\""
                                                             "device.icon_name=\"network-wireless\"",
