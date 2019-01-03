@@ -90,7 +90,7 @@ sink_create_source_cb (GnomeScreencastWindow * self, ScreencastSink * sink)
   res = gst_element_factory_make ("intervideosrc", "screencastsrc");
   g_object_set (res,
                 "do-timestamp", TRUE,
-                "timeout", (guint64) 10000000000,
+                "timeout", (guint64) G_MAXUINT64,
                 "channel", "screencast-inter-video",
                 NULL);
 
