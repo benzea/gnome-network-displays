@@ -8,11 +8,19 @@ typedef enum {
   ENCODER_X264,
 } WfdH264Encoder;
 
+typedef enum {
+  ENCODER_AAC_NONE = 0,
+  ENCODER_AAC_FDK,
+  ENCODER_AAC_AVENC,
+  ENCODER_AAC_FAAC,
+} WfdAACEncoder;
+
 struct _WfdMediaFactory
 {
   GstRTSPMediaFactory parent_instance;
 
   WfdH264Encoder      encoder;
+  WfdAACEncoder       aac_encoder;
 };
 
 G_DEFINE_TYPE (WfdMediaFactory, wfd_media_factory, GST_TYPE_RTSP_MEDIA_FACTORY)
@@ -39,7 +47,9 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
 
   g_autoptr(GstBin) bin = NULL;
   g_autoptr(GstCaps) caps = NULL;
+  g_autoptr(GstBin) audio_pipeline = NULL;
   GstElement *source = NULL;
+  GstElement *audio_source = NULL;
   GstElement *scale;
   GstElement *sizefilter;
   GstElement *convert;
@@ -50,6 +60,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
   GstElement *encoder;
   GstElement *parse;
   GstElement *codecfilter;
+  GstElement *queue_mpegmux_video;
   GstElement *mpegmux;
   GstElement *queue_pre_payloader;
   GstElement *payloader;
@@ -155,6 +166,13 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
                 NULL);
   success &= gst_bin_add (bin, codecfilter);
 
+  queue_mpegmux_video = gst_element_factory_make ("queue", "wfd-mpegmux-video-queue");
+  success &= gst_bin_add (bin, queue_mpegmux_video);
+  g_object_set (queue_mpegmux_video,
+                "max-size-buffers", (guint) 1,
+                "leaky", 0,
+                NULL);
+
   mpegmux = gst_element_factory_make ("mpegtsmux", "wfd-mpegtsmux");
   success &= gst_bin_add (bin, mpegmux);
   g_object_set (mpegmux,
@@ -190,6 +208,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
                                     encoder,
                                     parse,
                                     codecfilter,
+                                    queue_mpegmux_video,
                                     NULL);
 
   success &= gst_element_link_many (tee_interlace,
@@ -198,11 +217,71 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
                                     NULL);
 
   /* The WFD specification says we should use stream ID 0x1011. */
-  success &= gst_element_link_pads (codecfilter, "src", mpegmux, "sink_4113");
+  success &= gst_element_link_pads (queue_mpegmux_video, "src", mpegmux, "sink_4113");
   success &= gst_element_link_many (mpegmux,
                                     queue_pre_payloader,
                                     payloader,
                                     NULL);
+
+
+  /* Add audio elements */
+  if (self->aac_encoder != ENCODER_AAC_NONE)
+    g_signal_emit (self, signals[SIGNAL_CREATE_AUDIO_SOURCE], 0, &audio_source);
+
+  if (audio_source)
+    {
+      GstElement *audioencoder;
+      GstElement *audioresample;
+      GstElement *audioconvert;
+      GstElement *queue_mpegmux_audio;
+
+      audio_pipeline = GST_BIN (gst_bin_new ("wfd-audio"));
+      success &= gst_bin_add (bin, GST_ELEMENT (g_object_ref (audio_pipeline)));
+      /* The audio pipeline is disabled by default, we hook it up and
+       * enable it during configuration. */
+      gst_element_set_locked_state (GST_ELEMENT (audio_pipeline), TRUE);
+
+      success &= gst_bin_add (audio_pipeline, audio_source);
+
+      audioresample = gst_element_factory_make ("audioresample", "wfd-audio-resample");
+      success &= gst_bin_add (audio_pipeline, audioresample);
+
+      audioconvert = gst_element_factory_make ("audioconvert", "wfd-audio-convert");
+      success &= gst_bin_add (audio_pipeline, audioconvert);
+
+      switch (self->aac_encoder)
+        {
+        case ENCODER_AAC_FDK:
+          audioencoder = gst_element_factory_make ("fdkaacenc", "wfd-audio-aac-enc");
+          break;
+        case ENCODER_AAC_FAAC:
+          audioencoder = gst_element_factory_make ("faac", "wfd-audio-aac-enc");
+          break;
+        case ENCODER_AAC_AVENC:
+          audioencoder = gst_element_factory_make ("avenc_aac", "wfd-audio-aac-enc");
+          break;
+        default:
+          g_assert_not_reached ();
+        }
+      success &= gst_bin_add (audio_pipeline, audioencoder);
+
+      queue_mpegmux_audio = gst_element_factory_make ("queue", "wfd-mpegmux-audio-queue");
+      success &= gst_bin_add (audio_pipeline, queue_mpegmux_audio);
+
+      caps = gst_caps_new_simple ("audio/mpeg",
+                                  "channels", G_TYPE_INT, 2,
+                                  "rate", G_TYPE_INT, 48000,
+                                  NULL);
+
+      success &= gst_element_link_many (audio_source, audioresample, audioconvert, NULL);
+      success &= gst_element_link (audioconvert, audioencoder);
+      success &= gst_element_link_filtered (audioencoder, queue_mpegmux_audio, caps);
+
+      gst_element_add_pad (GST_ELEMENT (audio_pipeline),
+                           gst_ghost_pad_new ("src",
+                                              gst_element_get_static_pad (queue_mpegmux_audio,
+                                                                          "src")));
+    }
 
   GST_DEBUG_BIN_TO_DOT_FILE (bin,
                              GST_DEBUG_GRAPH_SHOW_MEDIA_TYPE,
@@ -300,6 +379,8 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
   g_autoptr(GstElement) encoder = NULL;
   g_autoptr(GstElement) selector_interlace = NULL;
   g_autoptr(GstPad) selector_interlace_pad = NULL;
+  g_autoptr(GstElement) audio_pipeline = NULL;
+  g_autoptr(GstElement) mpegmux = NULL;
   WfdVideoCodec *codec = params->selected_codec;
   WfdResolution *resolution = params->selected_resolution;
   WfdH264Encoder encoder_impl;
@@ -365,6 +446,31 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
   g_object_set (selector_interlace,
                 "active-pad", selector_interlace_pad,
                 NULL);
+
+  g_debug ("An audiocodec has been selected: %s", params->selected_audio_codec ? "yes" : "no");
+  audio_pipeline = gst_bin_get_by_name (bin, "wfd-audio");
+  mpegmux = gst_bin_get_by_name (bin, "wfd-mpegtsmux");
+  if (audio_pipeline)
+    {
+      gst_element_unlink (audio_pipeline, mpegmux);
+
+      if (params->selected_audio_codec)
+        {
+          /* We currently only handle AAC with 2 channels and 48kHz */
+          g_assert (params->selected_audio_codec->type == WFD_AUDIO_AAC);
+          g_assert (params->selected_audio_codec->modes == 0x1);
+
+          gst_element_set_locked_state (GST_ELEMENT (audio_pipeline), FALSE);
+
+          /* Hook up the audio channel */
+          gst_element_link_pads (audio_pipeline, "src", mpegmux, "sink_4352");
+        }
+      else
+        {
+          gst_element_set_locked_state (GST_ELEMENT (audio_pipeline), TRUE);
+          gst_element_set_state (GST_ELEMENT (audio_pipeline), GST_STATE_NULL);
+        }
+    }
 
   GST_DEBUG_BIN_TO_DOT_FILE (bin,
                              GST_DEBUG_GRAPH_SHOW_ALL,
@@ -469,8 +575,8 @@ static void
 wfd_media_factory_init (WfdMediaFactory *self)
 {
   GstRTSPMediaFactory *media_factory = GST_RTSP_MEDIA_FACTORY (self);
-
   g_autoptr(GstElementFactory) x264enc_factory = NULL;
+  g_autoptr(GstElementFactory) aac_factory = NULL;
 
   /* Default to openh264 and assume it is usable, prefer x264enc when available. */
   self->encoder = ENCODER_OPENH264;
@@ -479,6 +585,29 @@ wfd_media_factory_init (WfdMediaFactory *self)
     {
       g_debug ("Using x264enc for video encoding.");
       self->encoder = ENCODER_X264;
+    }
+
+  /* Default to openh264 and assume it is usable, prefer x264enc when available. */
+  self->aac_encoder = ENCODER_AAC_NONE;
+  aac_factory = gst_element_factory_find ("fdkaac");
+  if (aac_factory)
+    {
+      self->aac_encoder = ENCODER_AAC_FDK;
+      g_clear_object (&aac_factory);
+    }
+
+  aac_factory = gst_element_factory_find ("faac");
+  if (aac_factory)
+    {
+      self->aac_encoder = ENCODER_AAC_FAAC;
+      g_clear_object (&aac_factory);
+    }
+
+  aac_factory = gst_element_factory_find ("avenc_aac");
+  if (aac_factory)
+    {
+      self->aac_encoder = ENCODER_AAC_AVENC;
+      g_clear_object (&aac_factory);
     }
 
   gst_rtsp_media_factory_set_media_gtype (media_factory, WFD_TYPE_MEDIA);
