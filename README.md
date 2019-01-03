@@ -14,9 +14,8 @@ already work with at least some Miracast devices.
 Issues
 ======
 
-Currently the screencast seems to get frames in the wrong order from GNOME
-shell when the shell has multiple monitors. This is likely a bug in mutter
-or pipewire.
+Mutter currently has an issue when streaming from a multi-monitor setup. See
+  https://gitlab.gnome.org/GNOME/mutter/issues/424
 
 Testing
 =======
