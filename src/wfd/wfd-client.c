@@ -198,6 +198,20 @@ wfd_client_select_codec_and_resolution (WfdClient *self, WfdH264ProfileFlags pro
     }
 #endif
   g_debug ("selected resolution %i, %i @%i", self->params->selected_resolution->width, self->params->selected_resolution->height, self->params->selected_resolution->refresh_rate);
+
+  /* We currently only support AAC with two channels  */
+  for (i = 0; i < self->params->audio_codecs->len; i++)
+    {
+      WfdAudioCodec *codec = g_ptr_array_index (self->params->audio_codecs, i);
+
+      /* Accept AAC with 48KHz and 2 channels; this is currently hardcoded in the media factory */
+      if (codec->type == WFD_AUDIO_AAC && (codec->modes = 0x1))
+        {
+          self->params->selected_audio_codec = wfd_audio_codec_new ();
+          self->params->selected_audio_codec->type = WFD_AUDIO_AAC;
+          self->params->selected_audio_codec->modes = G_GUINT64_CONSTANT (0x00000001);
+        }
+    }
 }
 
 gboolean
@@ -267,6 +281,7 @@ wfd_client_set_params (WfdClient *self)
   g_autofree gchar * body = NULL;
   g_autofree gchar * presentation_uri = NULL;
   g_autofree gchar * resolution_descr = NULL;
+  g_autofree gchar * audio_descr = NULL;
 
   self->init_state = INIT_STATE_M4_SOURCE_SET_PARAMS;
 
@@ -274,13 +289,15 @@ wfd_client_set_params (WfdClient *self)
 
   presentation_uri = wfd_client_get_presentation_uri (self);
   resolution_descr = wfd_video_codec_get_descriptor_for_resolution (self->params->selected_codec, self->params->selected_resolution);
+  audio_descr = wfd_audio_get_descriptor (self->params->selected_audio_codec);
 
   body = g_strdup_printf (
     "wfd_video_formats: %s\r\n"
-    "wfd_audio_codecs: none\r\n"
+    "wfd_audio_codecs: %s\r\n"
     "wfd_presentation_URL: %s none\r\n"
     "wfd_client_rtp_ports: RTP/AVP/UDP;unicast %u %u mode=play\r\n",
     resolution_descr,
+    audio_descr,
     presentation_uri,
     self->params->primary_rtp_port, self->params->secondary_rtp_port);
 
@@ -312,9 +329,6 @@ wfd_client_handle_response (GstRTSPClient * client, GstRTSPContext *ctx)
     {
     case INIT_STATE_M1_SOURCE_QUERY_OPTIONS:
       g_debug ("WfdClient: OPTIONS querying done");
-      /* The standard says to disconnect. However, if we do this,
-       * then it is possible to connect a normal RTSP client for testing.
-       * e.g. VLC will play back the stream correctly. */
       self->init_state = INIT_STATE_M2_SINK_QUERY_OPTIONS;
       break;
 
@@ -513,6 +527,18 @@ wfd_client_pre_options_request (GstRTSPClient *client, GstRTSPContext *ctx)
       if (self->init_state != INIT_STATE_M2_SINK_QUERY_OPTIONS)
         {
           g_warning ("WfdClient: Got OPTIONS before getting reply querying WFD support; assuming normal RTSP connection.");
+          /* The standard says to disconnect. However, if we do this,
+           * then it is possible to connect a normal RTSP client for testing.
+           * e.g. VLC will play back the stream correctly.
+           *
+           * Also set a selected audio codec.
+           */
+
+          /* Enable audio with AAC and 2 channels (48kHz), currently hardcoded in the media factory*/
+          self->params->selected_audio_codec = wfd_audio_codec_new ();
+          self->params->selected_audio_codec->type = WFD_AUDIO_AAC;
+          self->params->selected_audio_codec->modes = G_GUINT64_CONSTANT (0x00000001);
+
           self->init_state = INIT_STATE_DONE;
         }
       else
