@@ -4,6 +4,7 @@ Currently a test image will be streamed.
 
 To use it, you will need:
  * openh264 or x264
+ * For audio supporting using AAC one of fdkaacenc, faac or avenc_aac
  * NetworkManager P2P patches
    https://gitlab.freedesktop.org/NetworkManager/NetworkManager/merge_requests/24
 
@@ -13,13 +14,9 @@ already work with at least some Miracast devices.
 Issues
 ======
 
-If there is any connection failure or similar, you will need to restart the
-program to try again.
-
-This program requires support for remote desktop in mutter. If this support is
-not available for you, then you can turn the "screencast_portal" compile time
-option off to fall back to X11 based screen grabbing.
-
+Currently the screencast seems to get frames in the wrong order from GNOME
+shell when the shell has multiple monitors. This is likely a bug in mutter
+or pipewire.
 
 Testing
 =======
