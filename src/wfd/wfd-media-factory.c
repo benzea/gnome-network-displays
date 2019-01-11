@@ -58,16 +58,16 @@ encoding_perf_handoff_cb (GstElement *elem, GstBuffer *buf, gpointer user_data)
 
     late = MAX(0, now - buf->pts);
 
-    /* We stop accepting things at more than 100ms delay;
-     * Just use late / 200ms for the long term proportion. */
-    if (buf->pts > 100 * GST_MSECOND)
+    /* We stop accepting things at more than 50ms delay;
+     * Just use late / 50ms for the long term proportion. */
+    if (buf->pts > 50 * GST_MSECOND)
       {
-        proportion = late / (gdouble) (100 * GST_MSECOND);
+        proportion = late / (gdouble) (50 * GST_MSECOND);
 
         /* g_debug ("Sending QOS event with proportion %.2f", proportion); */
         qos_event = gst_event_new_qos (GST_QOS_TYPE_UNDERFLOW,
                                        proportion,
-                                       late - 100 * GST_MSECOND,
+                                       late - 50 * GST_MSECOND,
                                        buf->pts);
 
         gst_element_send_event (elem, qos_event);
