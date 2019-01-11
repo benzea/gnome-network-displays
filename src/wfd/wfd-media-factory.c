@@ -211,8 +211,8 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
   queue_mpegmux_video = gst_element_factory_make ("queue", "wfd-mpegmux-video-queue");
   success &= gst_bin_add (bin, queue_mpegmux_video);
   g_object_set (queue_mpegmux_video,
-                "max-size-buffers", (guint) 1,
-                "leaky", 0,
+                "max-size-buffers", (guint) 1000,
+                "max-size-time", 500 * GST_MSECOND,
                 NULL);
 
   mpegmux = gst_element_factory_make ("mpegtsmux", "wfd-mpegtsmux");
@@ -309,6 +309,11 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
       success &= gst_bin_add (audio_pipeline, audioencoder);
 
       queue_mpegmux_audio = gst_element_factory_make ("queue", "wfd-mpegmux-audio-queue");
+      g_object_set (queue_mpegmux_audio,
+                    "max-size-buffers", (guint) 100000,
+                    "max-size-time", 500 * GST_MSECOND,
+                    "leaky", 0,
+                    NULL);
       success &= gst_bin_add (audio_pipeline, queue_mpegmux_audio);
 
       caps = gst_caps_new_simple ("audio/mpeg",
@@ -407,6 +412,11 @@ wfd_media_factory_create_pipeline (GstRTSPMediaFactory *factory, GstRTSPMedia *m
   g_autoptr(GstBus) bus = NULL;
 
   pipeline = GST_RTSP_MEDIA_FACTORY_CLASS (wfd_media_factory_parent_class)->create_pipeline (factory, media);
+
+  /* We need a high latency for the openh264 encoder at least when the
+   * usage-type is set to "screen". After e.g. scene changes the latency will
+   * be very high for short periods of time, and this prevents further issues. */
+  gst_pipeline_set_latency (GST_PIPELINE (pipeline), 500 * GST_MSECOND);
 
   bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
   gst_bus_add_watch (bus, pipeline_bus_watch_cb, NULL);
