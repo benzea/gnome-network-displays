@@ -40,11 +40,45 @@ enum {
 
 static guint signals[NR_SIGNALS];
 
+static void
+encoding_perf_handoff_cb (GstElement *elem, GstBuffer *buf, gpointer user_data)
+{
+  g_autoptr(GstClock) clock = NULL;
+  GstClockTime now;
+
+  clock = gst_element_get_clock (elem);
+  if (!clock)
+    return;
+
+  now = MAX (0, gst_clock_get_time (clock) - gst_element_get_base_time (elem));
+  if (buf->pts != GST_CLOCK_TIME_NONE) {
+    GstEvent *qos_event;
+    gdouble proportion;
+    GstClockTimeDiff late;
+
+    late = MAX(0, now - buf->pts);
+
+    /* We stop accepting things at more than 100ms delay;
+     * Just use late / 200ms for the long term proportion. */
+    if (buf->pts > 100 * GST_MSECOND)
+      {
+        proportion = late / (gdouble) (100 * GST_MSECOND);
+
+        /* g_debug ("Sending QOS event with proportion %.2f", proportion); */
+        qos_event = gst_event_new_qos (GST_QOS_TYPE_UNDERFLOW,
+                                       proportion,
+                                       late - 100 * GST_MSECOND,
+                                       buf->pts);
+
+        gst_element_send_event (elem, qos_event);
+     }
+  }
+}
+
 GstElement *
 wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl *url)
 {
   WfdMediaFactory *self = WFD_MEDIA_FACTORY (factory);
-
   g_autoptr(GstBin) bin = NULL;
   g_autoptr(GstCaps) caps = NULL;
   g_autoptr(GstBin) audio_pipeline = NULL;
@@ -58,6 +92,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
   GstElement *selector_interlace;
   GstElement *queue_pre_encoder;
   GstElement *encoder;
+  GstElement *encoding_perf;
   GstElement *parse;
   GstElement *codecfilter;
   GstElement *queue_mpegmux_video;
@@ -128,11 +163,14 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
                     "num-slices", 1,
                     "rate-control", 1, /* bitrate */
                     "gop-size", 30,
+                    /* If frame skipping is too aggressive, then audio will
+                     * drop out. So don't enable it. */
                     "enable-frame-skip", FALSE,
-                    /*"background-detection", FALSE,*/
+                    "scene-change-detection", TRUE,
+                    "background-detection", TRUE,
                     /*"adaptive-quantization", FALSE,*/
                     /*"max-slice-size", 5000,*/
-                    /*"complexity", 0,*/
+                    "complexity", 0,
                     /*"deblocking", 2,*/
                     NULL);
 
@@ -151,6 +189,10 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
       g_assert_not_reached ();
     }
   g_object_set_data (G_OBJECT (encoder), "wfd-encoder-impl", GINT_TO_POINTER (self->encoder));
+
+  encoding_perf = gst_element_factory_make ("identity", "wfd-measure-encoder-realtime");
+  success &= gst_bin_add (bin, encoding_perf);
+  g_signal_connect (encoding_perf, "handoff", G_CALLBACK (encoding_perf_handoff_cb), NULL);
 
   /* Repack the H264 stream */
   parse = gst_element_factory_make ("h264parse", "wfd-h264parse");
@@ -206,6 +248,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
                                     selector_interlace,
                                     queue_pre_encoder,
                                     encoder,
+                                    encoding_perf,
                                     parse,
                                     codecfilter,
                                     queue_mpegmux_video,
@@ -385,6 +428,12 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
   WfdResolution *resolution = params->selected_resolution;
   WfdH264Encoder encoder_impl;
   guint gop_size = resolution->refresh_rate;
+  guint bitrate_kbit = wfd_video_codec_get_max_bitrate_kbit (codec);
+
+  /* Limit initial video bitrate to 512kBit/s to ensure we don't
+   * saturate the wifi link.
+   * This is a rather bad method, but it kind of works. */
+  bitrate_kbit = MIN (bitrate_kbit, 512 * 8);
 
   /* Decrease the number of keyframes if the device is able to request
    * IDRs by itself. */
@@ -411,9 +460,8 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
        * if that works realiably, and simply using one slice is on the safe side
        */
       g_object_set (encoder,
-                    "enable-frame-skip", codec->frame_skipping_allowed,
-                    "max-bitrate", wfd_video_codec_get_max_bitrate_kbit (codec) * 1024,
-                    "bitrate", wfd_video_codec_get_max_bitrate_kbit (codec) * 1024,
+                    "max-bitrate", (guint) bitrate_kbit * 1024,
+                    "bitrate", (guint) bitrate_kbit * 1024,
                     "gop-size", gop_size,
                     NULL);
       break;
@@ -430,7 +478,7 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
                     "bframes", 0,
                     "key-int-max", gop_size,
                     "interlaced", resolution->interlaced,
-                    "bitrate",  wfd_video_codec_get_max_bitrate_kbit (codec),
+                    "bitrate",  bitrate_kbit,
                     "max-rc-lookahead", 0,
                     "qos", TRUE,
                     NULL);
@@ -612,4 +660,5 @@ wfd_media_factory_init (WfdMediaFactory *self)
 
   gst_rtsp_media_factory_set_media_gtype (media_factory, WFD_TYPE_MEDIA);
   gst_rtsp_media_factory_set_suspend_mode (media_factory, GST_RTSP_SUSPEND_MODE_RESET);
+  gst_rtsp_media_factory_set_buffer_size (media_factory, 65536);
 }

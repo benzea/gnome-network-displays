@@ -35,8 +35,6 @@ wfd_media_setup_rtpbin (GstRTSPMedia *media, GstElement *rtpbin)
                 "do-retransmission", TRUE,
                 "ntp-time-source", 3, /* clock time */
                 "max-misorder-time", 50,
-                "do-lost", TRUE,
-                "do-sync-event", TRUE,
                 "buffer-mode", 0,
                 "latency", 40,
                 NULL);
