@@ -142,10 +142,12 @@ screencast_wfd_p2p_provider_set_property (GObject      *object,
   switch (prop_id)
     {
     case PROP_CLIENT:
+      /* Construct only */
       provider->nm_client = g_value_dup_object (value);
       break;
 
     case PROP_DEVICE:
+      /* Construct only */
       provider->nm_device = g_value_dup_object (value);
 
       g_signal_connect_object (provider->nm_device,
@@ -160,9 +162,11 @@ screencast_wfd_p2p_provider_set_property (GObject      *object,
                                provider,
                                G_CONNECT_SWAPPED);
 
-      nm_device_p2p_wifi_start_find (NM_DEVICE_P2P_WIFI (provider->nm_device), NULL, NULL);
       if (provider->discover)
-        provider->p2p_find_source_id = g_timeout_add_seconds (20, device_restart_find_timeout, provider);
+        {
+          nm_device_p2p_wifi_start_find (NM_DEVICE_P2P_WIFI (provider->nm_device), NULL, NULL);
+          provider->p2p_find_source_id = g_timeout_add_seconds (20, device_restart_find_timeout, provider);
+        }
 
       peers = nm_device_p2p_wifi_get_peers (NM_DEVICE_P2P_WIFI (provider->nm_device));
       for (gint i = 0; i < peers->len; i++)
