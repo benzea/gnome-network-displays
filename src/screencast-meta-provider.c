@@ -315,6 +315,9 @@ screencast_meta_provider_add_provider (ScreencastMetaProvider *meta_provider,
                            meta_provider,
                            G_CONNECT_SWAPPED);
 
+  /* Sync discovery property */
+  g_object_set (provider, "discover", meta_provider->discover, NULL);
+
   /* Explicitly add all existing sinks */
   list = screencast_provider_get_sinks (provider);
   item = list;
