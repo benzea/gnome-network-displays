@@ -1,15 +1,14 @@
 This is an experimental GNOME Screencaster implementing Wi-Fi Display (aka Miracast).
 
-Currently a test image will be streamed.
+The application will stream the selected monitor if the mutter screencast
+portal is available. If it is unavailable, a fallback to X11 based frame
+grabbing will happen. As such, it should work fine in almost all setups.
 
 To use it, you will need:
  * openh264 or x264
  * For audio supporting using AAC one of fdkaacenc, faac or avenc_aac
  * NetworkManager P2P patches
    https://gitlab.freedesktop.org/NetworkManager/NetworkManager/merge_requests/24
-
-The changes are work in progress and need cleaning up. However, this should
-already work with at least some Miracast devices.
 
 Issues
 ======
