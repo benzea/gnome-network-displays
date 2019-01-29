@@ -31,7 +31,7 @@ struct _ScreencastWFDP2PSink
 
   NMClient           *nm_client;
   NMDevice           *nm_device;
-  NMP2PPeer          *nm_peer;
+  NMWifiP2PPeer      *nm_peer;
   NMActiveConnection *nm_ac;
 
   WfdServer          *server;
@@ -67,7 +67,7 @@ static GParamSpec * props[PROP_LAST] = { NULL, };
 
 
 static void
-peer_notify_cb (ScreencastWFDP2PSink *self, GParamSpec *pspec, NMP2PPeer *peer)
+peer_notify_cb (ScreencastWFDP2PSink *self, GParamSpec *pspec, NMWifiP2PPeer *peer)
 {
   /* TODO: Assumes the display name may have changed.
    *       This is obviously overly agressive, on the other hand
@@ -124,7 +124,7 @@ screencast_wfd_p2p_sink_get_property (GObject    *object,
         g_autoptr(GPtrArray) res = NULL;
         res = g_ptr_array_new_with_free_func (g_free);
 
-        g_ptr_array_add (res, g_strdup (nm_p2p_peer_get_hw_address (sink->nm_peer)));
+        g_ptr_array_add (res, g_strdup (nm_wifi_p2p_peer_get_hw_address (sink->nm_peer)));
 
         g_value_take_boxed (value, g_steal_pointer (&res));
         break;
@@ -228,7 +228,7 @@ screencast_wfd_p2p_sink_class_init (ScreencastWFDP2PSinkClass *klass)
   props[PROP_PEER] =
     g_param_spec_object ("peer", "Peer",
                          "The NMP2PPeer for this sink.",
-                         NM_TYPE_P2P_PEER,
+                         NM_TYPE_WIFI_P2P_PEER,
                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, PROP_LAST, props);
@@ -328,7 +328,7 @@ p2p_connected (GObject      *source_object,
 
   g_debug ("ScreencastWfdP2PSink: Got P2P connection");
 
-  ac = nm_client_add_and_activate_connection_options_finish (NM_CLIENT (source_object), res, &error);
+  ac = nm_client_add_and_activate_connection2_finish (NM_CLIENT (source_object), res, NULL, &error);
   if (!ac)
     {
       /* Operation was aborted */
@@ -404,14 +404,14 @@ screencast_wfd_p2p_sink_sink_start_stream (ScreencastSink *sink)
 
   options = g_variant_builder_end (builder);
 
-  nm_client_add_and_activate_connection_options (self->nm_client,
-                                                 NULL,
-                                                 self->nm_device,
-                                                 nm_object_get_path (NM_OBJECT (self->nm_peer)),
-                                                 options,
-                                                 self->cancellable,
-                                                 p2p_connected,
-                                                 sink);
+  nm_client_add_and_activate_connection2 (self->nm_client,
+                                          NULL,
+                                          self->nm_device,
+                                          nm_object_get_path (NM_OBJECT (self->nm_peer)),
+                                          options,
+                                          self->cancellable,
+                                          p2p_connected,
+                                          sink);
 
   return g_object_ref (sink);
 }
@@ -497,18 +497,18 @@ screencast_wfd_p2p_sink_get_device (ScreencastWFDP2PSink * sink)
  * screencast_wfd_p2p_sink_get_peer
  * @sink: a #ScreencastWFDP2PSink
  *
- * Retrieve the #NMP2PPeer the sink was found on.
+ * Retrieve the #NMWifiP2PPeer the sink was found on.
  *
- * Returns: (transfer none): The #NMP2PPeer
+ * Returns: (transfer none): The #NMWifiP2PPeer
  */
-NMP2PPeer *
+NMWifiP2PPeer *
 screencast_wfd_p2p_sink_get_peer (ScreencastWFDP2PSink * sink)
 {
   return sink->nm_peer;
 }
 
 ScreencastWFDP2PSink *
-screencast_wfd_p2p_sink_new (NMClient *client, NMDevice *device, NMP2PPeer * peer)
+screencast_wfd_p2p_sink_new (NMClient *client, NMDevice *device, NMWifiP2PPeer * peer)
 {
   return g_object_new (SCREENCAST_TYPE_WFD_P2P_SINK,
                        "client", client,

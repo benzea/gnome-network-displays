@@ -53,15 +53,15 @@ G_DEFINE_TYPE_EXTENDED (ScreencastWFDP2PProvider, screencast_wfd_p2p_provider, G
 static GParamSpec * props[PROP_LAST] = { NULL, };
 
 static void
-peer_added_cb (ScreencastWFDP2PProvider *provider, NMP2PPeer *peer, NMDevice *device)
+peer_added_cb (ScreencastWFDP2PProvider *provider, NMWifiP2PPeer *peer, NMDevice *device)
 {
   ScreencastWFDP2PSink *sink = NULL;
-  GBytes *wfdies;
+  GBytes *wfd_ies;
 
-  wfdies = nm_p2p_peer_get_wfdies (peer);
+  wfd_ies = nm_wifi_p2p_peer_get_wfd_ies (peer);
 
   /* Assume this is not a WFD Peer if there are no WFDIEs set. */
-  if (!wfdies || g_bytes_get_size (wfdies) == 0)
+  if (!wfd_ies || g_bytes_get_size (wfd_ies) == 0)
     return;
 
   g_debug ("WFDP2PProvider: Found a new sink with peer %p on device %p", peer, device);
@@ -73,7 +73,7 @@ peer_added_cb (ScreencastWFDP2PProvider *provider, NMP2PPeer *peer, NMDevice *de
 }
 
 static void
-peer_removed_cb (ScreencastWFDP2PProvider *provider, NMP2PPeer *peer, NMDevice *device)
+peer_removed_cb (ScreencastWFDP2PProvider *provider, NMWifiP2PPeer *peer, NMDevice *device)
 {
   g_debug ("WFDP2PProvider: Peer removed");
 
@@ -125,7 +125,7 @@ device_restart_find_timeout (gpointer user_data)
 {
   ScreencastWFDP2PProvider *provider = SCREENCAST_WFD_P2P_PROVIDER (user_data);
 
-  nm_device_p2p_wifi_start_find (NM_DEVICE_P2P_WIFI (provider->nm_device), NULL, NULL);
+  nm_device_wifi_p2p_start_find (NM_DEVICE_WIFI_P2P (provider->nm_device), NULL, NULL, NULL);
 
   return G_SOURCE_CONTINUE;
 }
@@ -164,11 +164,11 @@ screencast_wfd_p2p_provider_set_property (GObject      *object,
 
       if (provider->discover)
         {
-          nm_device_p2p_wifi_start_find (NM_DEVICE_P2P_WIFI (provider->nm_device), NULL, NULL);
+          nm_device_wifi_p2p_start_find (NM_DEVICE_WIFI_P2P (provider->nm_device), NULL, NULL, NULL);
           provider->p2p_find_source_id = g_timeout_add_seconds (20, device_restart_find_timeout, provider);
         }
 
-      peers = nm_device_p2p_wifi_get_peers (NM_DEVICE_P2P_WIFI (provider->nm_device));
+      peers = nm_device_wifi_p2p_get_peers (NM_DEVICE_WIFI_P2P (provider->nm_device));
       for (gint i = 0; i < peers->len; i++)
         peer_added_cb (provider, g_ptr_array_index (peers, i), provider->nm_device);
 
@@ -180,7 +180,7 @@ screencast_wfd_p2p_provider_set_property (GObject      *object,
 
       if (provider->discover)
         {
-          nm_device_p2p_wifi_start_find (NM_DEVICE_P2P_WIFI (provider->nm_device), NULL, NULL);
+          nm_device_wifi_p2p_start_find (NM_DEVICE_WIFI_P2P (provider->nm_device), NULL, NULL, NULL);
           if (!provider->p2p_find_source_id)
             provider->p2p_find_source_id = g_timeout_add_seconds (20, device_restart_find_timeout, provider);
         }
@@ -190,7 +190,7 @@ screencast_wfd_p2p_provider_set_property (GObject      *object,
             g_source_remove (provider->p2p_find_source_id);
           provider->p2p_find_source_id = 0;
 
-          nm_device_p2p_wifi_stop_find (NM_DEVICE_P2P_WIFI (provider->nm_device), NULL, NULL);
+          nm_device_wifi_p2p_stop_find (NM_DEVICE_WIFI_P2P (provider->nm_device), NULL, NULL, NULL);
         }
 
       break;

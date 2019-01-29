@@ -46,7 +46,7 @@ device_added_cb (ScreencastWFDP2PRegistry *registry, NMDevice *device, NMClient 
 {
   g_autoptr(ScreencastWFDP2PProvider) provider = NULL;
 
-  if (!NM_IS_DEVICE_P2P_WIFI (device))
+  if (!NM_IS_DEVICE_WIFI_P2P (device))
     return;
 
   g_debug ("WFDP2PRegistry: Found a new device, creating provider");
@@ -61,7 +61,7 @@ device_added_cb (ScreencastWFDP2PRegistry *registry, NMDevice *device, NMClient 
 static void
 device_removed_cb (ScreencastWFDP2PRegistry *registry, NMDevice *device, NMClient *client)
 {
-  if (!NM_IS_DEVICE_P2P_WIFI (device))
+  if (!NM_IS_DEVICE_WIFI_P2P (device))
     return;
 
   g_debug ("WFDP2PRegistry: Lost a device, removing provider");

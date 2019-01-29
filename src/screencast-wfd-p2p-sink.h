@@ -27,11 +27,13 @@ G_BEGIN_DECLS
 #define SCREENCAST_TYPE_WFD_P2P_SINK (screencast_wfd_p2p_sink_get_type ())
 G_DECLARE_FINAL_TYPE (ScreencastWFDP2PSink, screencast_wfd_p2p_sink, SCREENCAST, WFD_P2P_SINK, GObject)
 
-ScreencastWFDP2PSink *  screencast_wfd_p2p_sink_new (NMClient * client, NMDevice * device, NMP2PPeer * peer);
+ScreencastWFDP2PSink * screencast_wfd_p2p_sink_new (NMClient * client,
+                                                    NMDevice * device,
+                                                    NMWifiP2PPeer * peer);
 
-NMClient *   screencast_wfd_p2p_sink_get_client (ScreencastWFDP2PSink * sink);
-NMDevice *   screencast_wfd_p2p_sink_get_device (ScreencastWFDP2PSink * sink);
-NMP2PPeer *  screencast_wfd_p2p_sink_get_peer (ScreencastWFDP2PSink * sink);
+NMClient *             screencast_wfd_p2p_sink_get_client (ScreencastWFDP2PSink * sink);
+NMDevice *             screencast_wfd_p2p_sink_get_device (ScreencastWFDP2PSink * sink);
+NMWifiP2PPeer *        screencast_wfd_p2p_sink_get_peer (ScreencastWFDP2PSink * sink);
 
 
 G_END_DECLS
