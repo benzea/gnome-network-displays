@@ -157,17 +157,17 @@ screencast_wfd_p2p_sink_set_property (GObject      *object,
     case PROP_CLIENT:
       g_assert (sink->nm_client == NULL);
       sink->nm_client = g_value_dup_object (value);
-
-      g_signal_connect_object (sink->nm_client,
-                               "notify::" NM_DEVICE_ACTIVE_CONNECTION,
-                               (GCallback) notify_active_connection_cb,
-                               sink,
-                               G_CONNECT_SWAPPED);
       break;
 
     case PROP_DEVICE:
       g_assert (sink->nm_device == NULL);
       sink->nm_device = g_value_dup_object (value);
+
+      g_signal_connect_object (sink->nm_device,
+                               "notify::" NM_DEVICE_ACTIVE_CONNECTION,
+                               (GCallback) notify_active_connection_cb,
+                               sink,
+                               G_CONNECT_SWAPPED);
       break;
 
     case PROP_PEER:
