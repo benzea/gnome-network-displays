@@ -37,14 +37,14 @@ struct _GnomeScreencastWindow
   ScreencastMetaProvider   *meta_provider;
   ScreencastWFDP2PRegistry *wfd_p2p_registry;
 
-  ScreencastPortal *portal;
-  gboolean          use_x11;
+  ScreencastPortal         *portal;
+  gboolean                  use_x11;
 
-  ScreencastPulseaudio  *pulse;
+  ScreencastPulseaudio     *pulse;
 
-  GCancellable   *cancellable;
+  GCancellable             *cancellable;
 
-  ScreencastSink *stream_sink;
+  ScreencastSink           *stream_sink;
 
   /* Template widgets */
   GtkStack           *step_stack;
@@ -189,7 +189,7 @@ find_sink_list_row_activated_cb (GnomeScreencastWindow *self, ScreencastSinkRow 
 {
   ScreencastSink *sink;
 
-  if (!self->portal && ! self->use_x11)
+  if (!self->portal && !self->use_x11)
     {
       g_warning ("Cannot start streaming right now as we don't have a portal!");
       return;

@@ -61,12 +61,12 @@ screencast_provider_default_init (ScreencastProviderIface *iface)
                 G_TYPE_NONE,
                 1, SCREENCAST_TYPE_SINK);
 
-    g_object_interface_install_property (iface,
-                                         g_param_spec_boolean ("discover",
-                                                               "Discover",
-                                                               "Whether discovery is turned on",
-                                                               TRUE,
-                                                               G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  g_object_interface_install_property (iface,
+                                       g_param_spec_boolean ("discover",
+                                                             "Discover",
+                                                             "Whether discovery is turned on",
+                                                             TRUE,
+                                                             G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }
 
 /**

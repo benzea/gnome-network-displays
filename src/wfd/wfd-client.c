@@ -186,16 +186,16 @@ wfd_client_select_codec_and_resolution (WfdClient *self, WfdH264ProfileFlags pro
       else
         {
 #endif
-          /* Create a standard full HD resolution if everything fails. */
-          g_warning ("WfdClient: No resolution found, falling back to standard FullHD resolution.");
-          self->params->selected_resolution = wfd_resolution_new ();
-          self->params->selected_resolution->width = 1920;
-          self->params->selected_resolution->height = 1080;
-          self->params->selected_resolution->refresh_rate = 30;
-          self->params->selected_resolution->interlaced = FALSE;
+  /* Create a standard full HD resolution if everything fails. */
+  g_warning ("WfdClient: No resolution found, falling back to standard FullHD resolution.");
+  self->params->selected_resolution = wfd_resolution_new ();
+  self->params->selected_resolution->width = 1920;
+  self->params->selected_resolution->height = 1080;
+  self->params->selected_resolution->refresh_rate = 30;
+  self->params->selected_resolution->interlaced = FALSE;
 #if 0
-        }
-    }
+}
+}
 #endif
   g_debug ("selected resolution %i, %i @%i", self->params->selected_resolution->width, self->params->selected_resolution->height, self->params->selected_resolution->refresh_rate);
 
@@ -428,11 +428,12 @@ wfd_client_params_set (GstRTSPClient *client, GstRTSPContext *ctx)
 {
   WfdClient *self = WFD_CLIENT (client);
   g_autofree gchar *body_str = NULL;
+
   g_auto(GStrv) lines = NULL;
   gchar **line = NULL;
 
   gst_rtsp_message_init_response (ctx->response, GST_RTSP_STS_OK,
-      gst_rtsp_status_as_text (GST_RTSP_STS_OK), ctx->request);
+                                  gst_rtsp_status_as_text (GST_RTSP_STS_OK), ctx->request);
 
   if (ctx->request->body == NULL || ctx->request->body_size == 0)
     return GST_RTSP_OK;
@@ -480,9 +481,9 @@ wfd_client_params_set (GstRTSPClient *client, GstRTSPContext *ctx)
               gst_pad_send_event (srcpad, g_steal_pointer (&event));
             }
           else
-           {
-             g_debug ("Cannot force key frame currently, no media!");
-           }
+            {
+              g_debug ("Cannot force key frame currently, no media!");
+            }
         }
       else
         {

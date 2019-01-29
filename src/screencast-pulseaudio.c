@@ -2,14 +2,14 @@
 #include <pulse/glib-mainloop.h>
 #include <pulse/pulseaudio.h>
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(pa_proplist, pa_proplist_free)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (pa_proplist, pa_proplist_free)
 
 #define SCREENCAST_PA_SINK "gnome_screencast"
 #define SCREENCAST_PA_MONITOR SCREENCAST_PA_SINK ".monitor"
 
 struct _ScreencastPulseaudio
 {
-  GObject parent_instance;
+  GObject           parent_instance;
 
   GTask            *init_task;
 
@@ -37,11 +37,11 @@ G_DEFINE_TYPE_EXTENDED (ScreencastPulseaudio, screencast_pulseaudio, G_TYPE_OBJE
                        )
 
 enum {
-	PROP_0,
-	N_PROPS
+  PROP_0,
+  N_PROPS
 };
 
-static GParamSpec *properties [N_PROPS];
+static GParamSpec *properties[N_PROPS];
 
 
 static void
@@ -84,8 +84,8 @@ return_idle_success (GTask *task)
 
 static void
 on_pa_null_module_loaded (pa_context *c,
-                          uint32_t idx,
-                          void *userdata)
+                          uint32_t    idx,
+                          void       *userdata)
 {
   ScreencastPulseaudio *self = SCREENCAST_PULSEAUDIO (userdata);
 
@@ -107,10 +107,10 @@ on_pa_null_module_loaded (pa_context *c,
 }
 
 static void
-on_pa_screencast_sink_got_info (pa_context *c,
+on_pa_screencast_sink_got_info (pa_context         *c,
                                 const pa_sink_info *i,
-                                int eol,
-                                void *userdata)
+                                int                 eol,
+                                void               *userdata)
 {
   ScreencastPulseaudio *self = SCREENCAST_PULSEAUDIO (userdata);
 
@@ -159,8 +159,8 @@ on_pa_screencast_sink_got_info (pa_context *c,
                                             "sink_name=gnome_screencast "
                                             "rate=48000 "
                                             "sink_properties=device.description=\"GNOME-Screencast\""
-                                                            "device.class=\"sound\""
-                                                            "device.icon_name=\"network-wireless\"",
+                                            "device.class=\"sound\""
+                                            "device.icon_name=\"network-wireless\"",
                                             on_pa_null_module_loaded,
                                             self);
 }
@@ -217,6 +217,7 @@ screencast_pulseaudio_async_initable_init_async (GAsyncInitable     *initable,
                                                  gpointer            user_data)
 {
   ScreencastPulseaudio *self = SCREENCAST_PULSEAUDIO (initable);
+
   g_autoptr(pa_proplist) proplist = NULL;
   gint res;
 
@@ -272,7 +273,7 @@ screencast_pulseaudio_new (void)
 static void
 screencast_pulseaudio_finalize (GObject *object)
 {
-  ScreencastPulseaudio *self = (ScreencastPulseaudio *)object;
+  ScreencastPulseaudio *self = (ScreencastPulseaudio *) object;
 
   if (self->init_task)
     {
@@ -327,11 +328,11 @@ screencast_pulseaudio_set_property (GObject      *object,
 static void
 screencast_pulseaudio_class_init (ScreencastPulseaudioClass *klass)
 {
-	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-	object_class->finalize = screencast_pulseaudio_finalize;
-	object_class->get_property = screencast_pulseaudio_get_property;
-	object_class->set_property = screencast_pulseaudio_set_property;
+  object_class->finalize = screencast_pulseaudio_finalize;
+  object_class->get_property = screencast_pulseaudio_get_property;
+  object_class->set_property = screencast_pulseaudio_set_property;
 }
 
 static void
@@ -340,7 +341,7 @@ screencast_pulseaudio_init (ScreencastPulseaudio *self)
   self->null_module_idx = PA_INVALID_INDEX;
 }
 
-GstElement*
+GstElement *
 screencast_pulseaudio_get_source (ScreencastPulseaudio *self)
 {
   g_autoptr(GstElement) src = NULL;
@@ -359,4 +360,3 @@ screencast_pulseaudio_get_source (ScreencastPulseaudio *self)
 
   return g_steal_pointer (&src);
 }
-

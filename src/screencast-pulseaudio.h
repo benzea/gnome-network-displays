@@ -6,7 +6,7 @@
 
 G_BEGIN_DECLS
 
-#define SCREENCAST_TYPE_PULSEAUDIO (screencast_pulseaudio_get_type())
+#define SCREENCAST_TYPE_PULSEAUDIO (screencast_pulseaudio_get_type ())
 
 G_DECLARE_FINAL_TYPE (ScreencastPulseaudio, screencast_pulseaudio, SCREENCAST, PULSEAUDIO, GObject)
 

@@ -18,22 +18,22 @@ struct _WfdAudioCodec
 {
   WfdAudioCodecType type;
 
-  guint32    modes;
-  guint      latency_ms;
+  guint32           modes;
+  guint             latency_ms;
 
   /*< private >*/
   guint ref_count;
 };
 
 GType              wfd_audio_codec_get_type (void) G_GNUC_CONST;
-WfdAudioCodec     *wfd_audio_codec_new      (void);
-WfdAudioCodec     *wfd_audio_codec_copy     (WfdAudioCodec *self);
-WfdAudioCodec     *wfd_audio_codec_ref      (WfdAudioCodec *self);
-void               wfd_audio_codec_unref    (WfdAudioCodec *self);
+WfdAudioCodec     *wfd_audio_codec_new (void);
+WfdAudioCodec     *wfd_audio_codec_copy (WfdAudioCodec *self);
+WfdAudioCodec     *wfd_audio_codec_ref (WfdAudioCodec *self);
+void               wfd_audio_codec_unref (WfdAudioCodec *self);
 
-WfdAudioCodec     *wfd_audio_codec_new_from_desc (const gchar   *descr);
-gchar             *wfd_audio_get_descriptor      (WfdAudioCodec *self);
-void               wfd_audio_codec_dump          (WfdAudioCodec *self);
+WfdAudioCodec     *wfd_audio_codec_new_from_desc (const gchar *descr);
+gchar             *wfd_audio_get_descriptor (WfdAudioCodec *self);
+void               wfd_audio_codec_dump (WfdAudioCodec *self);
 
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (WfdAudioCodec, wfd_audio_codec_unref)

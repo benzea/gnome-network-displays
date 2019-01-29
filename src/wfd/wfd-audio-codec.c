@@ -12,12 +12,12 @@ G_DEFINE_BOXED_TYPE (WfdAudioCodec, wfd_audio_codec, wfd_audio_codec_ref, wfd_au
 WfdAudioCodec *
 wfd_audio_codec_new (void)
 {
-	WfdAudioCodec *self;
+  WfdAudioCodec *self;
 
-	self = g_slice_new0 (WfdAudioCodec);
-	self->ref_count = 1;
+  self = g_slice_new0 (WfdAudioCodec);
+  self->ref_count = 1;
 
-	return self;
+  return self;
 }
 
 /**
@@ -32,23 +32,23 @@ wfd_audio_codec_new (void)
 WfdAudioCodec *
 wfd_audio_codec_copy (WfdAudioCodec *self)
 {
-	WfdAudioCodec *copy;
+  WfdAudioCodec *copy;
 
-	g_return_val_if_fail (self, NULL);
-	g_return_val_if_fail (self->ref_count, NULL);
+  g_return_val_if_fail (self, NULL);
+  g_return_val_if_fail (self->ref_count, NULL);
 
-	copy = wfd_audio_codec_new ();
+  copy = wfd_audio_codec_new ();
 
-	return copy;
+  return copy;
 }
 
 static void
 wfd_audio_codec_free (WfdAudioCodec *self)
 {
-	g_assert (self);
-	g_assert_cmpint (self->ref_count, ==, 0);
+  g_assert (self);
+  g_assert_cmpint (self->ref_count, ==, 0);
 
-	g_slice_free (WfdAudioCodec, self);
+  g_slice_free (WfdAudioCodec, self);
 }
 
 /**
@@ -62,12 +62,12 @@ wfd_audio_codec_free (WfdAudioCodec *self)
 WfdAudioCodec *
 wfd_audio_codec_ref (WfdAudioCodec *self)
 {
-	g_return_val_if_fail (self, NULL);
-	g_return_val_if_fail (self->ref_count, NULL);
+  g_return_val_if_fail (self, NULL);
+  g_return_val_if_fail (self->ref_count, NULL);
 
-	g_atomic_int_inc (&self->ref_count);
+  g_atomic_int_inc (&self->ref_count);
 
-	return self;
+  return self;
 }
 
 /**
@@ -80,15 +80,15 @@ wfd_audio_codec_ref (WfdAudioCodec *self)
 void
 wfd_audio_codec_unref (WfdAudioCodec *self)
 {
-	g_return_if_fail (self);
-	g_return_if_fail (self->ref_count);
+  g_return_if_fail (self);
+  g_return_if_fail (self->ref_count);
 
-	if (g_atomic_int_dec_and_test (&self->ref_count))
-		wfd_audio_codec_free (self);
+  if (g_atomic_int_dec_and_test (&self->ref_count))
+    wfd_audio_codec_free (self);
 }
 
-WfdAudioCodec*
-wfd_audio_codec_new_from_desc (const gchar   *descr)
+WfdAudioCodec *
+wfd_audio_codec_new_from_desc (const gchar *descr)
 {
   g_autoptr(WfdAudioCodec) res;
   g_auto(GStrv) tokens = NULL;
@@ -116,7 +116,7 @@ wfd_audio_codec_new_from_desc (const gchar   *descr)
   return g_steal_pointer (&res);
 }
 
-gchar*
+gchar *
 wfd_audio_get_descriptor (WfdAudioCodec *self)
 {
   const gchar *type;
@@ -129,12 +129,15 @@ wfd_audio_get_descriptor (WfdAudioCodec *self)
     case WFD_AUDIO_LPCM:
       type = "LPCM";
       break;
+
     case WFD_AUDIO_AAC:
       type = "AAC";
       break;
+
     case WFD_AUDIO_AC3:
       type = "AC3";
       break;
+
     default:
       g_assert_not_reached ();
       return g_strdup ("none");
@@ -154,16 +157,18 @@ wfd_audio_codec_dump (WfdAudioCodec *self)
     case WFD_AUDIO_LPCM:
       type = "LPCM";
       break;
+
     case WFD_AUDIO_AAC:
       type = "AAC";
       break;
+
     case WFD_AUDIO_AC3:
       type = "AC3";
       break;
+
     default:
       g_assert_not_reached ();
     }
 
   g_debug ("WfdAudioCodec: %s, %" G_GUINT32_FORMAT ", latency: %d", type, self->modes, self->latency_ms);
 }
-

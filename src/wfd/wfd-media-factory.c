@@ -51,34 +51,36 @@ encoding_perf_handoff_cb (GstElement *elem, GstBuffer *buf, gpointer user_data)
     return;
 
   now = MAX (0, gst_clock_get_time (clock) - gst_element_get_base_time (elem));
-  if (buf->pts != GST_CLOCK_TIME_NONE) {
-    GstEvent *qos_event;
-    gdouble proportion;
-    GstClockTimeDiff late;
+  if (buf->pts != GST_CLOCK_TIME_NONE)
+    {
+      GstEvent *qos_event;
+      gdouble proportion;
+      GstClockTimeDiff late;
 
-    late = MAX(0, now - buf->pts);
+      late = MAX (0, now - buf->pts);
 
-    /* We stop accepting things at more than 50ms delay;
-     * Just use late / 50ms for the long term proportion. */
-    if (buf->pts > 50 * GST_MSECOND)
-      {
-        proportion = late / (gdouble) (50 * GST_MSECOND);
+      /* We stop accepting things at more than 50ms delay;
+       * Just use late / 50ms for the long term proportion. */
+      if (buf->pts > 50 * GST_MSECOND)
+        {
+          proportion = late / (gdouble) (50 * GST_MSECOND);
 
-        /* g_debug ("Sending QOS event with proportion %.2f", proportion); */
-        qos_event = gst_event_new_qos (GST_QOS_TYPE_UNDERFLOW,
-                                       proportion,
-                                       late - 50 * GST_MSECOND,
-                                       buf->pts);
+          /* g_debug ("Sending QOS event with proportion %.2f", proportion); */
+          qos_event = gst_event_new_qos (GST_QOS_TYPE_UNDERFLOW,
+                                         proportion,
+                                         late - 50 * GST_MSECOND,
+                                         buf->pts);
 
-        gst_element_send_event (elem, qos_event);
-     }
-  }
+          gst_element_send_event (elem, qos_event);
+        }
+    }
 }
 
 GstElement *
 wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl *url)
 {
   WfdMediaFactory *self = WFD_MEDIA_FACTORY (factory);
+
   g_autoptr(GstBin) bin = NULL;
   g_autoptr(GstCaps) caps = NULL;
   g_autoptr(GstBin) audio_pipeline = NULL;
@@ -297,12 +299,15 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
         case ENCODER_AAC_FDK:
           audioencoder = gst_element_factory_make ("fdkaacenc", "wfd-audio-aac-enc");
           break;
+
         case ENCODER_AAC_FAAC:
           audioencoder = gst_element_factory_make ("faac", "wfd-audio-aac-enc");
           break;
+
         case ENCODER_AAC_AVENC:
           audioencoder = gst_element_factory_make ("avenc_aac", "wfd-audio-aac-enc");
           break;
+
         default:
           g_assert_not_reached ();
         }
@@ -633,6 +638,7 @@ static void
 wfd_media_factory_init (WfdMediaFactory *self)
 {
   GstRTSPMediaFactory *media_factory = GST_RTSP_MEDIA_FACTORY (self);
+
   g_autoptr(GstElementFactory) x264enc_factory = NULL;
   g_autoptr(GstElementFactory) aac_factory = NULL;
 

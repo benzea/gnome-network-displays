@@ -12,7 +12,7 @@ G_DECLARE_FINAL_TYPE (WfdMediaFactory, wfd_media_factory, WFD, MEDIA_FACTORY, Gs
 WfdMediaFactory * wfd_media_factory_new (void);
 
 /* Just because it is convenient to have next to the pipeline creation code */
-void wfd_configure_media_element (GstBin        *bin,
-                                  WfdParams     *params);
+void wfd_configure_media_element (GstBin    *bin,
+                                  WfdParams *params);
 
 G_END_DECLS

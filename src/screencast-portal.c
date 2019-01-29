@@ -6,13 +6,13 @@
 
 struct _ScreencastPortal
 {
-  GObject     parent_instance;
+  GObject       parent_instance;
 
-  gchar      *session_handle;
+  gchar        *session_handle;
 
-  gint        portal_signal_id;
-  GDBusProxy *screencast;
-  guint32     stream_node_id;
+  gint          portal_signal_id;
+  GDBusProxy   *screencast;
+  guint32       stream_node_id;
 
   GCancellable *cancellable;
 };
@@ -399,11 +399,13 @@ screencast_portal_async_initable_init_async (GAsyncInitable     *initable,
 
   self->cancellable = g_cancellable_new ();
   if (cancellable)
-    g_signal_connect_object (cancellable,
-                             "cancelled",
-                             (GCallback) init_cancelable_cancelled_cb,
-                             self->cancellable,
-                             G_CONNECT_SWAPPED);
+    {
+      g_signal_connect_object (cancellable,
+                               "cancelled",
+                               (GCallback) init_cancelable_cancelled_cb,
+                               self->cancellable,
+                               G_CONNECT_SWAPPED);
+    }
 
   if (g_cancellable_is_cancelled (cancellable))
     g_cancellable_cancel (self->cancellable);
