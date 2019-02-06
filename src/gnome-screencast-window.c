@@ -169,6 +169,7 @@ sink_notify_state_cb (GnomeScreencastWindow *self, GParamSpec *pspec, Screencast
                          GTK_WIDGET (screencast_sink_row_new (self->stream_sink)));
 
       gtk_stack_set_visible_child_name (self->step_stack, "error");
+      break;
 
     case SCREENCAST_SINK_STATE_DISCONNECTED:
       gtk_container_foreach (GTK_CONTAINER (self->stream_sink_list), remove_widget, self->stream_sink_list);
