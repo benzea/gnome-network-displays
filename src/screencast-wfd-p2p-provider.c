@@ -125,7 +125,7 @@ device_restart_find_timeout (gpointer user_data)
 {
   ScreencastWFDP2PProvider *provider = SCREENCAST_WFD_P2P_PROVIDER (user_data);
 
-  nm_device_wifi_p2p_start_find (NM_DEVICE_WIFI_P2P (provider->nm_device), NULL, NULL, NULL);
+  nm_device_wifi_p2p_start_find (NM_DEVICE_WIFI_P2P (provider->nm_device), NULL, NULL, NULL, NULL);
 
   return G_SOURCE_CONTINUE;
 }
@@ -164,7 +164,7 @@ screencast_wfd_p2p_provider_set_property (GObject      *object,
 
       if (provider->discover)
         {
-          nm_device_wifi_p2p_start_find (NM_DEVICE_WIFI_P2P (provider->nm_device), NULL, NULL, NULL);
+          nm_device_wifi_p2p_start_find (NM_DEVICE_WIFI_P2P (provider->nm_device), NULL, NULL, NULL, NULL);
           provider->p2p_find_source_id = g_timeout_add_seconds (20, device_restart_find_timeout, provider);
         }
 
@@ -180,7 +180,7 @@ screencast_wfd_p2p_provider_set_property (GObject      *object,
 
       if (provider->discover)
         {
-          nm_device_wifi_p2p_start_find (NM_DEVICE_WIFI_P2P (provider->nm_device), NULL, NULL, NULL);
+          nm_device_wifi_p2p_start_find (NM_DEVICE_WIFI_P2P (provider->nm_device), NULL, NULL, NULL, NULL);
           if (!provider->p2p_find_source_id)
             provider->p2p_find_source_id = g_timeout_add_seconds (20, device_restart_find_timeout, provider);
         }
