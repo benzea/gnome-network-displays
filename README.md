@@ -7,8 +7,7 @@ grabbing will happen. As such, it should work fine in almost all setups.
 To use it, you will need:
  * openh264 or x264
  * For audio supporting using AAC one of fdkaacenc, faac or avenc_aac
- * NetworkManager P2P patches
-   https://gitlab.freedesktop.org/NetworkManager/NetworkManager/merge_requests/24
+ * NetworkManager version > 1.15.2
 
 Issues
 ======
