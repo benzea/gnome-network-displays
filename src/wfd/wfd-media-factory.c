@@ -25,6 +25,10 @@ struct _WfdMediaFactory
 
 G_DEFINE_TYPE (WfdMediaFactory, wfd_media_factory, GST_TYPE_RTSP_MEDIA_FACTORY)
 
+typedef struct {
+  GstSegment *segment;
+} QOSData;
+
 enum {
   PROP_0,
   N_PROPS
@@ -43,6 +47,7 @@ static guint signals[NR_SIGNALS];
 static void
 encoding_perf_handoff_cb (GstElement *elem, GstBuffer *buf, gpointer user_data)
 {
+  QOSData *qos_data = user_data;
   g_autoptr(GstClock) clock = NULL;
   GstClockTime now;
 
@@ -55,35 +60,75 @@ encoding_perf_handoff_cb (GstElement *elem, GstBuffer *buf, gpointer user_data)
     {
       GstEvent *qos_event;
       gdouble proportion;
+      GstClockTimeDiff pts;
       GstClockTimeDiff late;
 
-      late = MAX (0, now - buf->pts);
+      if (qos_data->segment)
+        pts = gst_segment_to_running_time (qos_data->segment, GST_FORMAT_TIME, buf->pts);
+      else
+        pts = buf->pts;
 
-      /* We stop accepting things at more than 50ms delay;
-       * Just use late / 50ms for the long term proportion. */
-      if (buf->pts > 50 * GST_MSECOND)
+      late = MAX (0, now - pts);
+
+      /* Ignore the first few frames. */
+      if (pts > 100 * GST_MSECOND)
         {
+          /* We stop accepting things at more than 50ms delay;
+           * Just use late / 50ms for the long term proportion. */
           proportion = late / (gdouble) (50 * GST_MSECOND);
 
           /* g_debug ("Sending QOS event with proportion %.2f", proportion); */
           qos_event = gst_event_new_qos (GST_QOS_TYPE_UNDERFLOW,
                                          proportion,
                                          late - 50 * GST_MSECOND,
-                                         buf->pts);
+                                         pts);
 
           gst_element_send_event (elem, qos_event);
         }
     }
 }
 
+GstPadProbeReturn
+encoding_perf_probe_cb (GstPad *pad,
+                        GstPadProbeInfo *info,
+                        gpointer user_data)
+{
+  const GstSegment *segment;
+  QOSData *qos_data = user_data;
+  GstEvent *event;
+
+  if (info->type != GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM)
+    return GST_PAD_PROBE_OK;
+
+  event = gst_pad_probe_info_get_event (info);
+
+  if (GST_EVENT_TYPE (event) != GST_EVENT_SEGMENT)
+    return;
+
+  gst_event_parse_segment (event, &segment);
+
+  g_clear_pointer (&qos_data->segment, gst_segment_free);
+  qos_data->segment = gst_segment_copy (segment);
+
+  return GST_PAD_PROBE_OK;
+}
+
+static void
+free_qos_data (QOSData *qos_data)
+{
+  g_clear_pointer (&qos_data->segment, gst_segment_free);
+  g_free (qos_data);
+}
+
 GstElement *
 wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl *url)
 {
   WfdMediaFactory *self = WFD_MEDIA_FACTORY (factory);
-
+  QOSData *qos_data;
   g_autoptr(GstBin) bin = NULL;
   g_autoptr(GstCaps) caps = NULL;
   g_autoptr(GstBin) audio_pipeline = NULL;
+  g_autoptr(GstPad) encoding_perf_sink = NULL;
   GstElement *source = NULL;
   GstElement *audio_source = NULL;
   GstElement *scale;
@@ -194,7 +239,15 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
 
   encoding_perf = gst_element_factory_make ("identity", "wfd-measure-encoder-realtime");
   success &= gst_bin_add (bin, encoding_perf);
-  g_signal_connect (encoding_perf, "handoff", G_CALLBACK (encoding_perf_handoff_cb), NULL);
+  qos_data = g_new0 (QOSData, 1);
+  g_object_set_data_full (G_OBJECT (encoding_perf), "wfd-qos-data", qos_data, (GDestroyNotify) free_qos_data);
+  g_signal_connect (encoding_perf, "handoff", G_CALLBACK (encoding_perf_handoff_cb), qos_data);
+  encoding_perf_sink = gst_element_get_static_pad (encoding_perf, "sink");
+  gst_pad_add_probe (encoding_perf_sink,
+                     GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM,
+                     encoding_perf_probe_cb,
+                     qos_data,
+                     NULL);
 
   /* Repack the H264 stream */
   parse = gst_element_factory_make ("h264parse", "wfd-h264parse");
