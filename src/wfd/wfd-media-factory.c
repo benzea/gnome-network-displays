@@ -256,7 +256,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
                 "config-interval", (gint) - 1,
                 NULL);
 
-  caps = gst_caps_from_string ("video/x-h264,alignment=nal,stream-format=byte-stream");
+  caps = gst_caps_from_string ("video/x-h264,alignment=nal,stream-format=byte-stream,profile=baseline");
   codecfilter = gst_element_factory_make ("capsfilter", "wfd-codecfilter");
   g_object_set (codecfilter,
                 "caps", caps,
@@ -487,8 +487,10 @@ wfd_media_factory_create_pipeline (GstRTSPMediaFactory *factory, GstRTSPMedia *m
 void
 wfd_configure_media_element (GstBin *bin, WfdParams *params)
 {
-  g_autoptr(GstCaps) caps = NULL;
+  g_autoptr(GstCaps) caps_sizefilter = NULL;
   g_autoptr(GstElement) sizefilter = NULL;
+  g_autoptr(GstCaps) caps_codecfilter = NULL;
+  g_autoptr(GstElement) codecfilter = NULL;
   g_autoptr(GstElement) encoder = NULL;
   g_autoptr(GstElement) selector_interlace = NULL;
   g_autoptr(GstPad) selector_interlace_pad = NULL;
@@ -497,6 +499,7 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
   WfdVideoCodec *codec = params->selected_codec;
   WfdResolution *resolution = params->selected_resolution;
   WfdH264Encoder encoder_impl;
+  WfdH264ProfileFlags profile;
   guint gop_size = resolution->refresh_rate;
   guint bitrate_kbit = wfd_video_codec_get_max_bitrate_kbit (codec);
 
@@ -510,15 +513,15 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
   if (params->idr_request_capability)
     gop_size = 10 * resolution->refresh_rate;
 
-  caps = gst_caps_new_simple ("video/x-raw",
-                              "framerate", GST_TYPE_FRACTION, resolution->refresh_rate, 1,
-                              "width", G_TYPE_INT, resolution->width,
-                              "height", G_TYPE_INT, resolution->height,
-                              NULL);
+  caps_sizefilter = gst_caps_new_simple ("video/x-raw",
+                                         "framerate", GST_TYPE_FRACTION, resolution->refresh_rate, 1,
+                                         "width", G_TYPE_INT, resolution->width,
+                                         "height", G_TYPE_INT, resolution->height,
+                                         NULL);
 
   sizefilter = gst_bin_get_by_name (bin, "wfd-sizefilter");
   g_object_set (sizefilter,
-                "caps", caps,
+                "caps", caps_sizefilter,
                 NULL);
 
   encoder = gst_bin_get_by_name (bin, "wfd-encoder");
@@ -529,6 +532,7 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
       /* We could set multi-thread/num-slices to codec->max_slice_num; but not sure
        * if that works realiably, and simply using one slice is on the safe side
        */
+      profile = WFD_H264_PROFILE_BASE;
       g_object_set (encoder,
                     "max-bitrate", (guint) bitrate_kbit * 1024,
                     "bitrate", (guint) bitrate_kbit * 1024,
@@ -557,6 +561,17 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
     default:
       g_assert_not_reached ();
     }
+
+  if (profile == WFD_H264_PROFILE_HIGH)
+    caps_codecfilter = gst_caps_from_string ("video/x-h264,alignment=nal,stream-format=byte-stream,profile=high");
+  else
+    caps_codecfilter = gst_caps_from_string ("video/x-h264,alignment=nal,stream-format=byte-stream,profile=baseline");
+
+  codecfilter = gst_bin_get_by_name (bin, "wfd-codecfilter");
+  g_object_set (codecfilter,
+                "caps", caps_codecfilter,
+                NULL);
+
 
   /* Unlink the interlacer */
   selector_interlace = gst_bin_get_by_name (bin, "wfd-selector-interlace");
