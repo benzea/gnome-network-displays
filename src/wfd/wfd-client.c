@@ -26,6 +26,8 @@ struct _WfdClient
   WfdClientInitState init_state;
   WfdMedia          *media;
   WfdParams         *params;
+
+  WfdMediaQuirks     media_quirks;
 };
 
 G_DEFINE_TYPE (WfdClient, wfd_client, GST_TYPE_RTSP_CLIENT)
@@ -232,7 +234,7 @@ wfd_client_configure_client_media (GstRTSPClient * client,
   self->media = WFD_MEDIA (media);
 
   element = gst_rtsp_media_get_element (media);
-  wfd_configure_media_element (GST_BIN (element), self->params);
+  self->media_quirks = wfd_configure_media_element (GST_BIN (element), self->params);
 
   res = GST_RTSP_CLIENT_CLASS (wfd_client_parent_class)->configure_client_media (client, media, stream, ctx);
 
@@ -464,7 +466,11 @@ wfd_client_params_set (GstRTSPClient *client, GstRTSPContext *ctx)
       if (g_str_equal (option, "wfd_idr_request"))
         {
           /* Force a key unit event. */
-          if (self->media)
+          if (self->media_quirks & WFD_QUIRK_NO_IDR)
+            {
+              g_debug ("Cannot force key frame as the pipeline doesn't support it!");
+            }
+          else if (self->media)
             {
               GstRTSPStream *stream;
               g_autoptr(GstPad) srcpad = NULL;

@@ -457,9 +457,10 @@ wfd_media_factory_create_pipeline (GstRTSPMediaFactory *factory, GstRTSPMedia *m
   return pipeline;
 }
 
-void
+WfdMediaQuirks
 wfd_configure_media_element (GstBin *bin, WfdParams *params)
 {
+  WfdMediaQuirks quirks = 0;
   g_autoptr(GstCaps) caps_sizefilter = NULL;
   g_autoptr(GstElement) sizefilter = NULL;
   g_autoptr(GstCaps) caps_codecfilter = NULL;
@@ -482,9 +483,13 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
   if (resolution->interlaced)
     g_warning ("Resolution should never be set to interlaced as that is not supported with all codecs.");
 
+  encoder = gst_bin_get_by_name (bin, "wfd-encoder");
+  encoder_impl = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (encoder), "wfd-encoder-impl"));
+
   /* Decrease the number of keyframes if the device is able to request
-   * IDRs by itself. */
-  if (params->idr_request_capability)
+   * IDRs by itself.
+   * Note that VAAPI H264 appears to run into an assertion error in version 1.14.4 */
+  if (params->idr_request_capability && !(quirks & WFD_QUIRK_NO_IDR))
     gop_size = 10 * resolution->refresh_rate;
 
   caps_sizefilter = gst_caps_new_simple ("video/x-raw",
@@ -498,8 +503,6 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
                 "caps", caps_sizefilter,
                 NULL);
 
-  encoder = gst_bin_get_by_name (bin, "wfd-encoder");
-  encoder_impl = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (encoder), "wfd-encoder-impl"));
   switch (encoder_impl)
     {
     case ENCODER_OPENH264:
