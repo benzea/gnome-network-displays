@@ -134,9 +134,6 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
   GstElement *scale;
   GstElement *sizefilter;
   GstElement *convert;
-  GstElement *tee_interlace;
-  GstElement *interlace;
-  GstElement *selector_interlace;
   GstElement *queue_pre_encoder;
   GstElement *encoder;
   GstElement *encoding_perf;
@@ -172,23 +169,6 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
 
   convert = gst_element_factory_make ("videoconvert", "wfd-videoconvert");
   success &= gst_bin_add (bin, convert);
-
-  tee_interlace = gst_element_factory_make ("tee", "wfd-tee-interlace");
-  success &= gst_bin_add (bin, tee_interlace);
-
-  interlace = gst_element_factory_make ("interlace", "wfd-interlace");
-  success &= gst_bin_add (bin, interlace);
-  /* 1:1 is 0, so convert 60 -> 60i */
-  g_object_set (interlace,
-                "field-pattern", 0,
-                NULL);
-
-  selector_interlace = gst_element_factory_make ("input-selector", "wfd-selector-interlace");
-  /* No need to sync the streams. */
-  g_object_set (selector_interlace,
-                "sync-streams", FALSE,
-                NULL);
-  success &= gst_bin_add (bin, selector_interlace);
 
   queue_pre_encoder = gst_element_factory_make ("queue", "wfd-pre-encoder-queue");
   g_object_set (queue_pre_encoder,
@@ -300,19 +280,12 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
                                     scale,
                                     sizefilter,
                                     convert,
-                                    tee_interlace,
-                                    selector_interlace,
                                     queue_pre_encoder,
                                     encoder,
                                     encoding_perf,
                                     parse,
                                     codecfilter,
                                     queue_mpegmux_video,
-                                    NULL);
-
-  success &= gst_element_link_many (tee_interlace,
-                                    interlace,
-                                    selector_interlace,
                                     NULL);
 
   /* The WFD specification says we should use stream ID 0x1011. */
@@ -492,8 +465,6 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
   g_autoptr(GstCaps) caps_codecfilter = NULL;
   g_autoptr(GstElement) codecfilter = NULL;
   g_autoptr(GstElement) encoder = NULL;
-  g_autoptr(GstElement) selector_interlace = NULL;
-  g_autoptr(GstPad) selector_interlace_pad = NULL;
   g_autoptr(GstElement) audio_pipeline = NULL;
   g_autoptr(GstElement) mpegmux = NULL;
   WfdVideoCodec *codec = params->selected_codec;
@@ -507,6 +478,9 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
    * saturate the wifi link.
    * This is a rather bad method, but it kind of works. */
   bitrate_kbit = MIN (bitrate_kbit, 512 * 8);
+
+  if (resolution->interlaced)
+    g_warning ("Resolution should never be set to interlaced as that is not supported with all codecs.");
 
   /* Decrease the number of keyframes if the device is able to request
    * IDRs by itself. */
@@ -589,13 +563,6 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
                 "caps", caps_codecfilter,
                 NULL);
 
-
-  /* Unlink the interlacer */
-  selector_interlace = gst_bin_get_by_name (bin, "wfd-selector-interlace");
-  selector_interlace_pad = gst_element_get_static_pad (selector_interlace, resolution->interlaced ? "sink_1" : "sink_0");
-  g_object_set (selector_interlace,
-                "active-pad", selector_interlace_pad,
-                NULL);
 
   g_debug ("An audiocodec has been selected: %s", params->selected_audio_codec ? "yes" : "no");
   audio_pipeline = gst_bin_get_by_name (bin, "wfd-audio");
