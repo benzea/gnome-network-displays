@@ -166,9 +166,9 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
   sizefilter = gst_element_factory_make ("capsfilter", "wfd-sizefilter");
   success &= gst_bin_add (bin, sizefilter);
   g_object_set (sizefilter,
-                "caps", g_steal_pointer (&caps),
+                "caps", caps,
                 NULL);
-
+  g_clear_pointer (&caps, gst_mini_object_unref);
 
   convert = gst_element_factory_make ("videoconvert", "wfd-videoconvert");
   success &= gst_bin_add (bin, convert);
@@ -259,8 +259,9 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
   caps = gst_caps_from_string ("video/x-h264,alignment=nal,stream-format=byte-stream");
   codecfilter = gst_element_factory_make ("capsfilter", "wfd-codecfilter");
   g_object_set (codecfilter,
-                "caps", g_steal_pointer (&caps),
+                "caps", caps,
                 NULL);
+  g_clear_pointer (&caps, gst_mini_object_unref);
   success &= gst_bin_add (bin, codecfilter);
 
   queue_mpegmux_video = gst_element_factory_make ("queue", "wfd-mpegmux-video-queue");
@@ -382,6 +383,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
       success &= gst_element_link_many (audio_source, audioresample, audioconvert, NULL);
       success &= gst_element_link (audioconvert, audioencoder);
       success &= gst_element_link_filtered (audioencoder, queue_mpegmux_audio, caps);
+      g_clear_pointer (&caps, gst_mini_object_unref);
 
       gst_element_add_pad (GST_ELEMENT (audio_pipeline),
                            gst_ghost_pad_new ("src",
