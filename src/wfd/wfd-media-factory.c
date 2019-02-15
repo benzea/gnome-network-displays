@@ -6,6 +6,7 @@
 typedef enum {
   ENCODER_OPENH264 = 0,
   ENCODER_X264,
+  ENCODER_VAAPIH264,
 } WfdH264Encoder;
 
 typedef enum {
@@ -211,6 +212,50 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
 
       gst_preset_load_preset (GST_PRESET (encoder), "Profile Baseline");
       break;
+
+    case ENCODER_VAAPIH264:
+      {
+        GstElement *vaapi_encoder;
+        GstElement *vaapi_convert;
+
+        encoder = gst_bin_new ("wfd-encoder-bin");
+
+        vaapi_convert = gst_element_factory_make ("vaapipostproc", "wfd-vaapi-convert");
+        g_object_set (vaapi_convert,
+                      "format", 2, /* Force I420 */
+                      NULL);
+        success &= gst_bin_add (GST_BIN (encoder), vaapi_convert);
+
+        vaapi_encoder = gst_element_factory_make ("vaapih264enc", "wfd-encoder");
+        success &= gst_bin_add (GST_BIN (encoder), vaapi_encoder);
+
+        g_object_set (vaapi_encoder,
+                      "qos", TRUE,
+                      "rate-control", 2, /* constant bitrate */
+                      "keyframe-period", 30,
+                      "max-bframes", 0,
+                      "refs", 1,
+                      "num-slices", 1,
+                      "cabac", FALSE,
+                      "dct8x8", FALSE,
+                      "compliance-mode", 0, /* strict */
+                      NULL);
+
+        gst_element_link (vaapi_convert, vaapi_encoder);
+
+
+        gst_element_add_pad (encoder,
+                             gst_ghost_pad_new ("sink",
+                                                gst_element_get_static_pad (vaapi_convert,
+                                                                            "sink")));
+        gst_element_add_pad (encoder,
+                             gst_ghost_pad_new ("src",
+                                                gst_element_get_static_pad (vaapi_encoder,
+                                                                            "src")));
+
+        success &= gst_bin_add (bin, encoder);
+        break;
+      }
 
     default:
       g_assert_not_reached ();
@@ -486,6 +531,9 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
   encoder = gst_bin_get_by_name (bin, "wfd-encoder");
   encoder_impl = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (encoder), "wfd-encoder-impl"));
 
+  if (encoder_impl == ENCODER_VAAPIH264)
+    quirks = WFD_QUIRK_NO_IDR;
+
   /* Decrease the number of keyframes if the device is able to request
    * IDRs by itself.
    * Note that VAAPI H264 appears to run into an assertion error in version 1.14.4 */
@@ -549,6 +597,19 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
                     "bitrate",  bitrate_kbit,
                     "insert-vui", TRUE,
                     "sliced-threads", FALSE,
+                    NULL);
+      break;
+
+
+    case ENCODER_VAAPIH264:
+      if (codec->profile == WFD_H264_PROFILE_HIGH)
+        profile = WFD_H264_PROFILE_HIGH;
+      else
+        profile = WFD_H264_PROFILE_BASE;
+
+      g_object_set (encoder,
+                    "keyframe-period", (guint) gop_size,
+                    "bitrate",  bitrate_kbit,
                     NULL);
       break;
 
@@ -697,6 +758,7 @@ wfd_media_factory_init (WfdMediaFactory *self)
   GstRTSPMediaFactory *media_factory = GST_RTSP_MEDIA_FACTORY (self);
 
   g_autoptr(GstElementFactory) x264enc_factory = NULL;
+  g_autoptr(GstElementFactory) vaapih264enc_factory = NULL;
   g_autoptr(GstElementFactory) aac_factory = NULL;
 
   /* Default to openh264 and assume it is usable, prefer x264enc when available. */
@@ -704,8 +766,15 @@ wfd_media_factory_init (WfdMediaFactory *self)
   x264enc_factory = gst_element_factory_find ("x264enc");
   if (x264enc_factory)
     {
-      g_debug ("Using x264enc for video encoding.");
+      g_debug ("Found x264enc for video encoding.");
       self->encoder = ENCODER_X264;
+    }
+
+  vaapih264enc_factory = gst_element_factory_find ("vaapih264enc");
+  if (vaapih264enc_factory)
+    {
+      g_debug ("Found vaapih264enc for video encoding.");
+      self->encoder = ENCODER_VAAPIH264;
     }
 
   /* Default to openh264 and assume it is usable, prefer x264enc when available. */
