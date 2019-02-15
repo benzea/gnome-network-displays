@@ -229,7 +229,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
       encoder = gst_element_factory_make ("x264enc", "wfd-encoder");
       success &= gst_bin_add (bin, encoder);
 
-      gst_preset_load_preset (GST_PRESET (encoder), "Profile High");
+      gst_preset_load_preset (GST_PRESET (encoder), "Profile Baseline");
       break;
 
     default:
@@ -542,19 +542,36 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
 
     case ENCODER_X264:
       if (codec->profile == WFD_H264_PROFILE_HIGH)
-        gst_preset_load_preset (GST_PRESET (encoder), "Profile High");
+        {
+          profile = WFD_H264_PROFILE_HIGH;
+          gst_preset_load_preset (GST_PRESET (encoder), "Profile High");
+        }
       else
-        gst_preset_load_preset (GST_PRESET (encoder), "Profile Base");
+        {
+          profile = WFD_H264_PROFILE_BASE;
+          gst_preset_load_preset (GST_PRESET (encoder), "Profile Baseline");
+        }
 
       g_object_set (encoder,
-                    /* "pass", "cbr", */
+                    "qos", TRUE,
+                    "pass", 4, /* constant bit rate encoding */
+                    "tune", 0x4, /* zero latency */
+                    "speed-preset", 1, /* ultrafast */
+                    "rc-lookahead", 1,
+                    "threads", 1,
+                    "vbv-buf-capacity", 50,
+                    "dct8x8", FALSE,
+                    "ref", 1,
+                    "cabac", FALSE,
+                    "sync-lookahead", 0,
                     "b-adapt", FALSE,
-                    "bframes", 0,
-                    "key-int-max", gop_size,
+                    "bframes", (guint) 0,
+                    "rc-lookahead", 0,
+                    "key-int-max", (guint) gop_size,
                     "interlaced", resolution->interlaced,
                     "bitrate",  bitrate_kbit,
-                    "max-rc-lookahead", 0,
-                    "qos", TRUE,
+                    "insert-vui", TRUE,
+                    "sliced-threads", FALSE,
                     NULL);
       break;
 
