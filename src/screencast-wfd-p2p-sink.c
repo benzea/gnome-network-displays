@@ -390,8 +390,10 @@ screencast_wfd_p2p_sink_sink_start_stream (ScreencastSink *sink)
 {
   ScreencastWFDP2PSink *self = SCREENCAST_WFD_P2P_SINK (sink);
   GVariant *options = NULL;
-
+  g_autoptr(NMConnection) connection = NULL;
+  NMSetting *p2p_setting;
   g_autoptr(GVariantBuilder) builder = NULL;
+  g_autoptr(GBytes) wfd_ies = NULL;
 
   g_return_val_if_fail (self->state == SCREENCAST_SINK_STATE_DISCONNECTED, NULL);
 
@@ -404,8 +406,16 @@ screencast_wfd_p2p_sink_sink_start_stream (ScreencastSink *sink)
 
   options = g_variant_builder_end (builder);
 
+  /* Static WFD IEs describing a source with the RTSP server on port 7236. */
+  wfd_ies = g_bytes_new_static ("\x00\x00\x06\x00\x90\x1c\x44\x00\xc8", 9);
+
+  connection = nm_simple_connection_new ();
+  p2p_setting = nm_setting_wifi_p2p_new ();
+  nm_connection_add_setting (connection, p2p_setting);
+  g_object_set (p2p_setting, NM_SETTING_WIFI_P2P_WFD_IES, wfd_ies, NULL);
+
   nm_client_add_and_activate_connection2 (self->nm_client,
-                                          NULL,
+                                          connection,
                                           self->nm_device,
                                           nm_object_get_path (NM_OBJECT (self->nm_peer)),
                                           options,
