@@ -3,6 +3,15 @@
 	<id>org.gnome.Screencast.desktop</id>
 	<metadata_license>CC0-1.0</metadata_license>
 	<project_license>GPL-3.0-or-later</project_license>
+	<name>GNOME Screencast</name>
+	<summary>Stream the desktop to Wi-Fi Display capable devices</summary>
+	<url type="homepage">https://github.com/benzea/gnome-screencast</url>
+	<translation type="gettext">gnome-screencast</translation>
 	<description>
+		<p>
+		GNOME-Screencast allows you to cast your desktop to a remote display. Currently
+		implemented is support for casting to Wi-Fi Display capable devices (a.k.a. Miracast).
+		</p>
 	</description>
+	<update_contact>bberg@gnome.org</update_contact>
 </component>
