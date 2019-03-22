@@ -392,6 +392,8 @@ screencast_wfd_p2p_sink_sink_start_stream (ScreencastSink *sink)
   GVariant *options = NULL;
   g_autoptr(NMConnection) connection = NULL;
   NMSetting *p2p_setting;
+  NMSetting *ipv4_setting;
+  NMSetting *ipv6_setting;
   g_autoptr(GVariantBuilder) builder = NULL;
   g_autoptr(GBytes) wfd_ies = NULL;
 
@@ -413,6 +415,23 @@ screencast_wfd_p2p_sink_sink_start_stream (ScreencastSink *sink)
   p2p_setting = nm_setting_wifi_p2p_new ();
   nm_connection_add_setting (connection, p2p_setting);
   g_object_set (p2p_setting, NM_SETTING_WIFI_P2P_WFD_IES, wfd_ies, NULL);
+
+  /* We never want to route on IPv4 */
+  ipv4_setting = nm_setting_ip4_config_new ();
+  nm_connection_add_setting (connection, ipv4_setting);
+  g_object_set (ipv4_setting,
+                NM_SETTING_IP_CONFIG_METHOD, NM_SETTING_IP4_CONFIG_METHOD_AUTO,
+                NM_SETTING_IP_CONFIG_NEVER_DEFAULT, TRUE,
+                NULL);
+
+  /* We do not need IPv6 */
+  ipv6_setting = nm_setting_ip4_config_new ();
+  nm_connection_add_setting (connection, ipv6_setting);
+  g_object_set (ipv6_setting,
+                NM_SETTING_IP_CONFIG_METHOD, NM_SETTING_IP6_CONFIG_METHOD_AUTO,
+                NM_SETTING_IP_CONFIG_NEVER_DEFAULT, TRUE,
+                NM_SETTING_IP_CONFIG_MAY_FAIL, TRUE,
+                NULL);
 
   nm_client_add_and_activate_connection2 (self->nm_client,
                                           connection,
