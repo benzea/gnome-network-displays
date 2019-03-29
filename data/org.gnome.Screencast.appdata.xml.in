@@ -7,6 +7,11 @@
 	<summary>Stream the desktop to Wi-Fi Display capable devices</summary>
 	<url type="homepage">https://github.com/benzea/gnome-screencast</url>
 	<translation type="gettext">gnome-screencast</translation>
+	<screenshots>
+		<screenshot>
+			<image>https://raw.githubusercontent.com/benzea/gnome-screencast/master/data/appdata/device-list.png</image>
+		</screenshot>
+	</screenshots>
 	<description>
 		<p>
 		GNOME-Screencast allows you to cast your desktop to a remote display. Currently
