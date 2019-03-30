@@ -279,15 +279,14 @@ screencast_portal_init_async_cb (GObject      *source_object,
 
           window = GNOME_SCREENCAST_WINDOW (user_data);
 
-          /* If this the error was for an unknown method, then we likely
-           * don't have a gnome-shell or it does not support the screen casting
-           * portal.
-           * In this case we assume that an xvimagesrc is usable, in all other
-           * cases it is a fatal error. */
-          if (!g_error_matches (error, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_METHOD))
-            gtk_widget_destroy (GTK_WIDGET (window));
-          else
-            window->use_x11 = TRUE;
+          /* Unknown method means the portal does not exist, give a slightly
+           * more specific warning then.
+           */
+          if (g_error_matches (error, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_METHOD))
+            g_warning ("Screencasting portal is unavailable! It is required to select the monitor to stream!");
+
+          g_warning ("Falling back to X11! You need to fix your setup to avoid issues (XDG Portals and/or mutter screencasting support)!");
+          window->use_x11 = TRUE;
         }
 
       g_object_unref (source_object);

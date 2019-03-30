@@ -139,7 +139,8 @@ portal_start_response_received (GDBusConnection *connection,
       g_task_return_new_error (task,
                                G_IO_ERROR,
                                G_IO_ERROR_FAILED,
-                               "Failed to create portal session");
+                               "Failed to start streaming on portal session (response: %u)",
+                               response);
       g_object_unref (task);
       return;
     }
@@ -197,7 +198,8 @@ portal_select_source_response_received (GDBusConnection *connection,
       g_task_return_new_error (task,
                                G_IO_ERROR,
                                G_IO_ERROR_FAILED,
-                               "Failed to create portal sesssion");
+                               "Failed to select source on portal session (response: %u)",
+                               response);
       g_object_unref (task);
       return;
     }
@@ -262,7 +264,8 @@ portal_create_session_response_received (GDBusConnection *connection,
       g_task_return_new_error (task,
                                G_IO_ERROR,
                                G_IO_ERROR_FAILED,
-                               "Failed to create portal sesssion");
+                               "Failed to create portal session (response: %u)",
+                               response);
       return;
     }
 
