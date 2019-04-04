@@ -661,14 +661,9 @@ wfd_media_factory_construct (GstRTSPMediaFactory *factory, const GstRTSPUrl *url
 {
   GstRTSPContext *ctx;
   GstRTSPMedia *res;
-  GstRTSPClient *client;
   GstRTSPStream *stream;
 
   res = GST_RTSP_MEDIA_FACTORY_CLASS (wfd_media_factory_parent_class)->construct (factory, url);
-
-  /* XXX: Can this be done in a better location?*/
-  ctx = gst_rtsp_context_get_current ();
-  client = ctx->client;
 
   stream = gst_rtsp_media_get_stream (res, 0);
   gst_rtsp_stream_set_control (stream, "streamid=0");
