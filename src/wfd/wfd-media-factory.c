@@ -138,6 +138,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
   GstElement *convert;
   GstElement *queue_pre_encoder;
   GstElement *encoder;
+  GstElement *encoder_elem;
   GstElement *encoding_perf;
   GstElement *parse;
   GstElement *codecfilter;
@@ -183,6 +184,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
     {
     case ENCODER_OPENH264:
       encoder = gst_element_factory_make ("openh264enc", "wfd-encoder");
+      encoder_elem = encoder;
       success &= gst_bin_add (bin, encoder);
       g_object_set (encoder,
                     "qos", TRUE,
@@ -209,6 +211,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
 
     case ENCODER_X264:
       encoder = gst_element_factory_make ("x264enc", "wfd-encoder");
+      encoder_elem = encoder;
       success &= gst_bin_add (bin, encoder);
 
       gst_preset_load_preset (GST_PRESET (encoder), "Profile Baseline");
@@ -228,6 +231,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
         success &= gst_bin_add (GST_BIN (encoder), vaapi_convert);
 
         vaapi_encoder = gst_element_factory_make ("vaapih264enc", "wfd-encoder");
+        encoder_elem = vaapi_encoder;
         success &= gst_bin_add (GST_BIN (encoder), vaapi_encoder);
 
         g_object_set (vaapi_encoder,
@@ -261,7 +265,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
     default:
       g_assert_not_reached ();
     }
-  g_object_set_data (G_OBJECT (encoder), "wfd-encoder-impl", GINT_TO_POINTER (self->encoder));
+  g_object_set_data (G_OBJECT (encoder_elem), "wfd-encoder-impl", GINT_TO_POINTER (self->encoder));
 
   encoding_perf = gst_element_factory_make ("identity", "wfd-measure-encoder-realtime");
   success &= gst_bin_add (bin, encoding_perf);
