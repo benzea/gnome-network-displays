@@ -659,7 +659,6 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
 GstRTSPMedia *
 wfd_media_factory_construct (GstRTSPMediaFactory *factory, const GstRTSPUrl *url)
 {
-  GstRTSPContext *ctx;
   GstRTSPMedia *res;
   GstRTSPStream *stream;
 
