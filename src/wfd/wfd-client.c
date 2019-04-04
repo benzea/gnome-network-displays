@@ -333,8 +333,8 @@ wfd_client_make_path_from_uri (GstRTSPClient * client, const GstRTSPUrl * uri)
    * a specific stream. We can do so safely because we only have one stream.
    */
   if (ctx->request &&
-      (ctx->request->type != GST_RTSP_PLAY ||
-       ctx->request->type != GST_RTSP_PAUSE))
+      (ctx->request->type_data.request.method == GST_RTSP_PLAY ||
+       ctx->request->type_data.request.method == GST_RTSP_PAUSE))
     {
       if (g_str_has_suffix (uri->abspath, "/streamid=0"))
         return g_strndup (uri->abspath, strlen (uri->abspath) - 11);
