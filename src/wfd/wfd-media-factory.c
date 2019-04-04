@@ -654,6 +654,8 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
   GST_DEBUG_BIN_TO_DOT_FILE (bin,
                              GST_DEBUG_GRAPH_SHOW_ALL,
                              "wfd-encoder-bin-configured");
+
+  return quirks;
 }
 
 GstRTSPMedia *
