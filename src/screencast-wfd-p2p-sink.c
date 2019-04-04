@@ -321,10 +321,9 @@ p2p_connected (GObject      *source_object,
                GAsyncResult *res,
                gpointer      user_data)
 {
+  g_autoptr(GError) error = NULL;
   ScreencastWFDP2PSink *sink = NULL;
   NMActiveConnection *ac = NULL;
-
-  g_autoptr(GError) error = NULL;
 
   g_debug ("ScreencastWfdP2PSink: Got P2P connection");
 
@@ -388,14 +387,14 @@ p2p_connected (GObject      *source_object,
 static ScreencastSink *
 screencast_wfd_p2p_sink_sink_start_stream (ScreencastSink *sink)
 {
+  g_autoptr(NMConnection) connection = NULL;
+  g_autoptr(GVariantBuilder) builder = NULL;
+  g_autoptr(GBytes) wfd_ies = NULL;
   ScreencastWFDP2PSink *self = SCREENCAST_WFD_P2P_SINK (sink);
   GVariant *options = NULL;
-  g_autoptr(NMConnection) connection = NULL;
   NMSetting *p2p_setting;
   NMSetting *ipv4_setting;
   NMSetting *ipv6_setting;
-  g_autoptr(GVariantBuilder) builder = NULL;
-  g_autoptr(GBytes) wfd_ies = NULL;
 
   g_return_val_if_fail (self->state == SCREENCAST_SINK_STATE_DISCONNECTED, NULL);
 

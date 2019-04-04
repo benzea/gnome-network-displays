@@ -6,7 +6,6 @@
 G_BEGIN_DECLS
 
 #define WFD_TYPE_MEDIA_FACTORY (wfd_media_factory_get_type ())
-
 G_DECLARE_FINAL_TYPE (WfdMediaFactory, wfd_media_factory, WFD, MEDIA_FACTORY, GstRTSPMediaFactory)
 
 typedef enum {

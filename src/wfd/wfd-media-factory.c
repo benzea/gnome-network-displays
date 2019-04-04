@@ -26,7 +26,8 @@ struct _WfdMediaFactory
 
 G_DEFINE_TYPE (WfdMediaFactory, wfd_media_factory, GST_TYPE_RTSP_MEDIA_FACTORY)
 
-typedef struct {
+typedef struct
+{
   GstSegment *segment;
 } QOSData;
 
@@ -48,8 +49,8 @@ static guint signals[NR_SIGNALS];
 static void
 encoding_perf_handoff_cb (GstElement *elem, GstBuffer *buf, gpointer user_data)
 {
-  QOSData *qos_data = user_data;
   g_autoptr(GstClock) clock = NULL;
+  QOSData *qos_data = user_data;
   GstClockTime now;
 
   clock = gst_element_get_clock (elem);
@@ -90,9 +91,9 @@ encoding_perf_handoff_cb (GstElement *elem, GstBuffer *buf, gpointer user_data)
 }
 
 GstPadProbeReturn
-encoding_perf_probe_cb (GstPad *pad,
+encoding_perf_probe_cb (GstPad          *pad,
                         GstPadProbeInfo *info,
-                        gpointer user_data)
+                        gpointer         user_data)
 {
   const GstSegment *segment;
   QOSData *qos_data = user_data;
@@ -124,12 +125,12 @@ free_qos_data (QOSData *qos_data)
 GstElement *
 wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl *url)
 {
-  WfdMediaFactory *self = WFD_MEDIA_FACTORY (factory);
-  QOSData *qos_data;
   g_autoptr(GstBin) bin = NULL;
   g_autoptr(GstCaps) caps = NULL;
   g_autoptr(GstBin) audio_pipeline = NULL;
   g_autoptr(GstPad) encoding_perf_sink = NULL;
+  WfdMediaFactory *self = WFD_MEDIA_FACTORY (factory);
+  QOSData *qos_data;
   GstElement *source = NULL;
   GstElement *audio_source = NULL;
   GstElement *scale;
@@ -505,7 +506,6 @@ wfd_media_factory_create_pipeline (GstRTSPMediaFactory *factory, GstRTSPMedia *m
 WfdMediaQuirks
 wfd_configure_media_element (GstBin *bin, WfdParams *params)
 {
-  WfdMediaQuirks quirks = 0;
   g_autoptr(GstCaps) caps_sizefilter = NULL;
   g_autoptr(GstElement) sizefilter = NULL;
   g_autoptr(GstCaps) caps_codecfilter = NULL;
@@ -513,6 +513,7 @@ wfd_configure_media_element (GstBin *bin, WfdParams *params)
   g_autoptr(GstElement) encoder = NULL;
   g_autoptr(GstElement) audio_pipeline = NULL;
   g_autoptr(GstElement) mpegmux = NULL;
+  WfdMediaQuirks quirks = 0;
   WfdVideoCodec *codec = params->selected_codec;
   WfdResolution *resolution = params->selected_resolution;
   WfdH264Encoder encoder_impl;
