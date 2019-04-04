@@ -339,6 +339,7 @@ wfd_video_codec_get_max_bitrate_kbit (WfdVideoCodec *self)
 
     case 1 << 4:
         bitrate = 50000;
+      break;
 
     default:
       g_warning ("WfdVideoCodec: Unknown level %i", self->level);
