@@ -8,13 +8,6 @@ struct _WfdMedia
 
 G_DEFINE_TYPE (WfdMedia, wfd_media, GST_TYPE_RTSP_MEDIA)
 
-enum {
-  PROP_0,
-  N_PROPS
-};
-
-static GParamSpec *properties[N_PROPS];
-
 WfdMedia *
 wfd_media_new (void)
 {

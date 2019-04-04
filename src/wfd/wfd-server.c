@@ -12,13 +12,6 @@ struct _WfdServer
 G_DEFINE_TYPE (WfdServer, wfd_server, GST_TYPE_RTSP_SERVER)
 
 enum {
-  PROP_0,
-  N_PROPS
-};
-
-static GParamSpec *properties[N_PROPS];
-
-enum {
   SIGNAL_CREATE_SOURCE,
   SIGNAL_CREATE_AUDIO_SOURCE,
   NR_SIGNALS
@@ -44,36 +37,6 @@ wfd_server_finalize (GObject *object)
   self->clean_pool_source_id = 0;
 
   G_OBJECT_CLASS (wfd_server_parent_class)->finalize (object);
-}
-
-static void
-wfd_server_get_property (GObject    *object,
-                         guint       prop_id,
-                         GValue     *value,
-                         GParamSpec *pspec)
-{
-  WfdServer *self = WFD_SERVER (object);
-
-  switch (prop_id)
-    {
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
-}
-
-static void
-wfd_server_set_property (GObject      *object,
-                         guint         prop_id,
-                         const GValue *value,
-                         GParamSpec   *pspec)
-{
-  WfdServer *self = WFD_SERVER (object);
-
-  switch (prop_id)
-    {
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
 }
 
 static GstRTSPClient *
@@ -152,8 +115,6 @@ wfd_server_class_init (WfdServerClass *klass)
   GstRTSPServerClass *server_class = GST_RTSP_SERVER_CLASS (klass);
 
   object_class->finalize = wfd_server_finalize;
-  object_class->get_property = wfd_server_get_property;
-  object_class->set_property = wfd_server_set_property;
 
   server_class->create_client = wfd_server_create_client;
   server_class->client_connected = wfd_server_client_connected;

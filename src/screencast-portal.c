@@ -32,13 +32,6 @@ G_DEFINE_TYPE_EXTENDED (ScreencastPortal, screencast_portal, G_TYPE_OBJECT, 0,
                                                screencast_portal_async_initable_iface_init);
                        )
 
-enum {
-  PROP_0,
-  N_PROPS
-};
-
-static GParamSpec *properties[N_PROPS];
-
 /* Copied from GTK+ */
 static char *
 get_portal_path (GDBusConnection *connection,
@@ -464,43 +457,11 @@ screencast_portal_finalize (GObject *object)
 }
 
 static void
-screencast_portal_get_property (GObject    *object,
-                                guint       prop_id,
-                                GValue     *value,
-                                GParamSpec *pspec)
-{
-  ScreencastPortal *self = SCREENCAST_PORTAL (object);
-
-  switch (prop_id)
-    {
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
-}
-
-static void
-screencast_portal_set_property (GObject      *object,
-                                guint         prop_id,
-                                const GValue *value,
-                                GParamSpec   *pspec)
-{
-  ScreencastPortal *self = SCREENCAST_PORTAL (object);
-
-  switch (prop_id)
-    {
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
-}
-
-static void
 screencast_portal_class_init (ScreencastPortalClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = screencast_portal_finalize;
-  object_class->get_property = screencast_portal_get_property;
-  object_class->set_property = screencast_portal_set_property;
 }
 
 static void

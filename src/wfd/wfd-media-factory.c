@@ -32,13 +32,6 @@ typedef struct
 } QOSData;
 
 enum {
-  PROP_0,
-  N_PROPS
-};
-
-static GParamSpec *properties[N_PROPS];
-
-enum {
   SIGNAL_CREATE_SOURCE,
   SIGNAL_CREATE_AUDIO_SOURCE,
   NR_SIGNALS
@@ -693,39 +686,7 @@ wfd_media_factory_new (void)
 static void
 wfd_media_factory_finalize (GObject *object)
 {
-  WfdMediaFactory *self = (WfdMediaFactory *) object;
-
   G_OBJECT_CLASS (wfd_media_factory_parent_class)->finalize (object);
-}
-
-static void
-wfd_media_factory_get_property (GObject    *object,
-                                guint       prop_id,
-                                GValue     *value,
-                                GParamSpec *pspec)
-{
-  WfdMediaFactory *self = WFD_MEDIA_FACTORY (object);
-
-  switch (prop_id)
-    {
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
-}
-
-static void
-wfd_media_factory_set_property (GObject      *object,
-                                guint         prop_id,
-                                const GValue *value,
-                                GParamSpec   *pspec)
-{
-  WfdMediaFactory *self = WFD_MEDIA_FACTORY (object);
-
-  switch (prop_id)
-    {
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
 }
 
 static void
@@ -735,8 +696,6 @@ wfd_media_factory_class_init (WfdMediaFactoryClass *klass)
   GstRTSPMediaFactoryClass *media_factory_class = GST_RTSP_MEDIA_FACTORY_CLASS (klass);
 
   object_class->finalize = wfd_media_factory_finalize;
-  object_class->get_property = wfd_media_factory_get_property;
-  object_class->set_property = wfd_media_factory_set_property;
 
   media_factory_class->create_element = wfd_media_factory_create_element;
   media_factory_class->create_pipeline = wfd_media_factory_create_pipeline;

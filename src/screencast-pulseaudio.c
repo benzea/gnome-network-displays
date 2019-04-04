@@ -36,14 +36,6 @@ G_DEFINE_TYPE_EXTENDED (ScreencastPulseaudio, screencast_pulseaudio, G_TYPE_OBJE
                                                screencast_pulseaudio_async_initable_iface_init);
                        )
 
-enum {
-  PROP_0,
-  N_PROPS
-};
-
-static GParamSpec *properties[N_PROPS];
-
-
 static void
 screencast_pulseaudio_async_initable_iface_init (GAsyncInitableIface *iface)
 {
@@ -296,43 +288,11 @@ screencast_pulseaudio_finalize (GObject *object)
 }
 
 static void
-screencast_pulseaudio_get_property (GObject    *object,
-                                    guint       prop_id,
-                                    GValue     *value,
-                                    GParamSpec *pspec)
-{
-  ScreencastPulseaudio *self = SCREENCAST_PULSEAUDIO (object);
-
-  switch (prop_id)
-    {
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
-}
-
-static void
-screencast_pulseaudio_set_property (GObject      *object,
-                                    guint         prop_id,
-                                    const GValue *value,
-                                    GParamSpec   *pspec)
-{
-  ScreencastPulseaudio *self = SCREENCAST_PULSEAUDIO (object);
-
-  switch (prop_id)
-    {
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
-}
-
-static void
 screencast_pulseaudio_class_init (ScreencastPulseaudioClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = screencast_pulseaudio_finalize;
-  object_class->get_property = screencast_pulseaudio_get_property;
-  object_class->set_property = screencast_pulseaudio_set_property;
 }
 
 static void

@@ -32,13 +32,6 @@ struct _WfdClient
 
 G_DEFINE_TYPE (WfdClient, wfd_client, GST_TYPE_RTSP_CLIENT)
 
-enum {
-  PROP_0,
-  N_PROPS
-};
-
-static GParamSpec *properties[N_PROPS];
-
 static const gchar * supported_rtsp_features[] = {
   "org.wfa.wfd1.0",
   "OPTIONS",
@@ -72,36 +65,6 @@ wfd_client_finalize (GObject *object)
   self->keep_alive_source_id = 0;
 
   G_OBJECT_CLASS (wfd_client_parent_class)->finalize (object);
-}
-
-static void
-wfd_client_get_property (GObject    *object,
-                         guint       prop_id,
-                         GValue     *value,
-                         GParamSpec *pspec)
-{
-  WfdClient *self = WFD_CLIENT (object);
-
-  switch (prop_id)
-    {
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
-}
-
-static void
-wfd_client_set_property (GObject      *object,
-                         guint         prop_id,
-                         const GValue *value,
-                         GParamSpec   *pspec)
-{
-  WfdClient *self = WFD_CLIENT (object);
-
-  switch (prop_id)
-    {
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
 }
 
 gchar *
@@ -600,8 +563,6 @@ wfd_client_class_init (WfdClientClass *klass)
   GstRTSPClientClass *client_class = GST_RTSP_CLIENT_CLASS (klass);
 
   object_class->finalize = wfd_client_finalize;
-  object_class->get_property = wfd_client_get_property;
-  object_class->set_property = wfd_client_set_property;
 
   client_class->check_requirements = wfd_client_check_requirements;
   client_class->configure_client_media = wfd_client_configure_client_media;
