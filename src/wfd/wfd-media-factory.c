@@ -4,7 +4,8 @@
 
 
 typedef enum {
-  ENCODER_OPENH264 = 0,
+  ENCODER_NONE = 0,
+  ENCODER_OPENH264,
   ENCODER_X264,
   ENCODER_VAAPIH264,
 } WfdH264Encoder;
@@ -716,13 +717,21 @@ static void
 wfd_media_factory_init (WfdMediaFactory *self)
 {
   GstRTSPMediaFactory *media_factory = GST_RTSP_MEDIA_FACTORY (self);
-
+  g_autoptr(GstElementFactory) openh264enc_factory = NULL;
   g_autoptr(GstElementFactory) x264enc_factory = NULL;
   g_autoptr(GstElementFactory) vaapih264enc_factory = NULL;
   g_autoptr(GstElementFactory) aac_factory = NULL;
 
   /* Default to openh264 and assume it is usable, prefer x264enc when available. */
-  self->encoder = ENCODER_OPENH264;
+  self->encoder = ENCODER_NONE;
+
+  openh264enc_factory = gst_element_factory_find ("openh264enc");
+  if (openh264enc_factory)
+    {
+      g_debug ("Found openh264enc for video encoding.");
+      self->encoder = ENCODER_OPENH264;
+    }
+
   x264enc_factory = gst_element_factory_find ("x264enc");
   if (x264enc_factory)
     {
@@ -736,6 +745,9 @@ wfd_media_factory_init (WfdMediaFactory *self)
       g_debug ("Found vaapih264enc for video encoding.");
       self->encoder = ENCODER_VAAPIH264;
     }
+
+  if (self->encoder == ENCODER_NONE)
+    g_error ("WFD: Did not find any usable H264 video encoder, missing dependencies!");
 
   /* Default to openh264 and assume it is usable, prefer x264enc when available. */
   self->aac_encoder = ENCODER_AAC_NONE;
