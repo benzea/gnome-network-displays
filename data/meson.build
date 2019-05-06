@@ -1,3 +1,5 @@
+subdir('icons')
+
 desktop_file = i18n.merge_file(
   input: 'org.gnome.NetworkDisplays.desktop.in',
   output: 'org.gnome.NetworkDisplays.desktop',
