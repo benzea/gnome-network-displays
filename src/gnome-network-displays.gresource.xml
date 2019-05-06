@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/gnome/screencast">
+    <file>nd-window.ui</file>
+    <file>nd-sink-row.ui</file>
+  </gresource>
+</gresources>

@@ -18,8 +18,8 @@
 
 #include <glib/gi18n.h>
 #include <gst/gst.h>
-#include "gnome-screencast-config.h"
-#include "gnome-screencast-window.h"
+#include "gnome-network-displays-config.h"
+#include "nd-window.h"
 
 static void
 on_activate (GtkApplication *app)
@@ -36,7 +36,7 @@ on_activate (GtkApplication *app)
   window = gtk_application_get_active_window (app);
   if (window == NULL)
     {
-      window = g_object_new (GNOME_SCREENCAST_TYPE_WINDOW,
+      window = g_object_new (ND_TYPE_WINDOW,
                              "application", app,
                              "default-width", 600,
                              "default-height", 300,
@@ -66,7 +66,7 @@ main (int   argc,
    * application windows, integration with the window manager/compositor, and
    * desktop features such as file opening and single-instance applications.
    */
-  app = gtk_application_new ("org.gnome.gnome-screencast", G_APPLICATION_FLAGS_NONE);
+  app = gtk_application_new ("org.gnome.NetworkDisplays", G_APPLICATION_FLAGS_NONE);
 
   /*
    * We connect to the activate signal to create a window when the application

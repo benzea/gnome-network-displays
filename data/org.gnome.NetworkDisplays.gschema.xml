@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="gnome-network-displays">
+	<schema id="org.gnome.NetworkDisplays" path="/org/gnome/network-displays/">
+	</schema>
+</schemalist>

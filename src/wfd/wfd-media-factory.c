@@ -1,4 +1,4 @@
-#include "gnome-screencast-config.h"
+#include "gnome-network-displays-config.h"
 #include "wfd-media-factory.h"
 #include "wfd-media.h"
 
@@ -717,6 +717,7 @@ static void
 wfd_media_factory_init (WfdMediaFactory *self)
 {
   GstRTSPMediaFactory *media_factory = GST_RTSP_MEDIA_FACTORY (self);
+
   g_autoptr(GstElementFactory) openh264enc_factory = NULL;
   g_autoptr(GstElementFactory) x264enc_factory = NULL;
   g_autoptr(GstElementFactory) vaapih264enc_factory = NULL;

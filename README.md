@@ -1,4 +1,4 @@
-This is an experimental GNOME Screencaster implementing Wi-Fi Display (aka Miracast).
+This is an experimental implementation of Wi-Fi Display (aka Miracast).
 
 The application will stream the selected monitor if the mutter screencast
 portal is available. If it is unavailable, a fallback to X11 based frame
@@ -18,7 +18,7 @@ Mutter currently has an issue when streaming from a multi-monitor setup. See
 Testing
 =======
 
-For testing purposes you can run with SCREENCAST_DUMMY=1 set. In that case, a dummy
+For testing purposes you can run with ND_DUMMY=1 set. In that case, a dummy
 sink will be provided that allows connecting on localhost using any RTSP capable
 client to test WFD streaming.
 

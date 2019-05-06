@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+	<id>org.gnome.NetworkDisplays.desktop</id>
+	<metadata_license>CC0-1.0</metadata_license>
+	<project_license>GPL-3.0-or-later</project_license>
+	<name>GNOME Network Displays</name>
+	<summary>Stream the desktop to Wi-Fi Display capable devices</summary>
+	<url type="homepage">https://github.com/benzea/gnome-screencast</url>
+	<translation type="gettext">gnome-network-displays</translation>
+	<screenshots>
+		<screenshot>
+			<image>https://raw.githubusercontent.com/benzea/gnome-screencast/master/data/appdata/device-list.png</image>
+		</screenshot>
+	</screenshots>
+	<description>
+		<p>
+		GNOME Newtork Displays allows you to cast your desktop to a remote display. Currently
+		implemented is support for casting to Wi-Fi Display capable devices (a.k.a. Miracast).
+		</p>
+	</description>
+	<update_contact>bberg@gnome.org</update_contact>
+</component>

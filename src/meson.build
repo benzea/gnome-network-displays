@@ -1,32 +1,32 @@
 
 subdir('wfd')
 
-gnome_screencast_sources = [
+gnome_nd_sources = [
   'main.c',
-  'gnome-screencast-window.c',
-  'screencast-sink-list.c',
-  'screencast-sink-row.c',
-  'screencast-sink.c',
-  'screencast-provider.c',
-  'screencast-meta-sink.c',
-  'screencast-meta-provider.c',
-  'screencast-wfd-p2p-sink.c',
-  'screencast-wfd-p2p-provider.c',
-  'screencast-wfd-p2p-registry.c',
-  'screencast-dummy-provider.c',
-  'screencast-dummy-wfd-sink.c',
-  'screencast-portal.c',
-  'screencast-pulseaudio.c',
+  'nd-window.c',
+  'nd-sink-list.c',
+  'nd-sink-row.c',
+  'nd-sink.c',
+  'nd-provider.c',
+  'nd-meta-sink.c',
+  'nd-meta-provider.c',
+  'nd-wfd-p2p-sink.c',
+  'nd-wfd-p2p-provider.c',
+  'nd-wfd-p2p-registry.c',
+  'nd-dummy-provider.c',
+  'nd-dummy-wfd-sink.c',
+  'nd-screencast-portal.c',
+  'nd-pulseaudio.c',
 ]
 
-enum_headers = files('screencast-sink.h')
+enum_headers = files('nd-sink.h')
 
-gnome_screencast_sources += gnome.mkenums_simple(
-  'screencast-enum-types',
+gnome_nd_sources += gnome.mkenums_simple(
+  'nd-enum-types',
   sources: enum_headers,
 )
 
-gnome_screencast_deps = [
+gnome_nd_deps = [
   dependency('gio-2.0', version: '>= 2.50'),
   dependency('gtk+-3.0', version: '>= 3.22'),
   dependency('libnm', version: '>= 1.15'),
@@ -34,16 +34,16 @@ gnome_screencast_deps = [
   dependency('libpulse-mainloop-glib'),
 ]
 
-gnome_screencast_deps += wfd_server_deps
+gnome_nd_deps += wfd_server_deps
 
-gnome_screencast_sources += gnome.compile_resources('gnome-screencast-resources',
-  'gnome-screencast.gresource.xml',
+gnome_nd_sources += gnome.compile_resources('gnome-nd-resources',
+  'gnome-network-displays.gresource.xml',
   c_name: 'gnome_screencast'
 )
 
-executable('gnome-screencast',
-  gnome_screencast_sources,
-  dependencies: gnome_screencast_deps,
+executable('gnome-network-displays',
+  gnome_nd_sources,
+  dependencies: gnome_nd_deps,
   install: true,
   link_with: wfd_server,
 )

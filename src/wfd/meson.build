@@ -12,8 +12,8 @@ wfd_server_sources = [
 
 #enum_headers = files()
 #
-#gnome_screencast_sources += gnome.mkenums_simple(
-#  'screencast-enum-types',
+#gnome_nd_sources += gnome.mkenums_simple(
+#  'nd-enum-types',
 #  sources: enum_headers,
 #)
 
