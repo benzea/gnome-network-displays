@@ -4,5 +4,5 @@ Exec=gnome-network-displays
 Icon=org.gnome.NetworkDisplays
 Terminal=false
 Type=Application
-Categories=GTK;
+Categories=AudioVideo;
 StartupNotify=true
