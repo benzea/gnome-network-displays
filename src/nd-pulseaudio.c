@@ -217,8 +217,8 @@ nd_pulseaudio_async_initable_init_async (GAsyncInitable     *initable,
   self->mainloop_api = pa_glib_mainloop_get_api (self->mainloop);
 
   proplist = pa_proplist_new ();
-  pa_proplist_sets (proplist, PA_PROP_APPLICATION_NAME, "GNOME Nd");
-  pa_proplist_sets (proplist, PA_PROP_APPLICATION_ID, "org.gnome.Nd");
+  pa_proplist_sets (proplist, PA_PROP_APPLICATION_NAME, "GNOME Network Displays");
+  pa_proplist_sets (proplist, PA_PROP_APPLICATION_ID, "org.gnome.NetworkDisplays");
   /* pa_proplist_sets (proplist, PA_PROP_APPLICATION_ICON_NAME, ); */
 
   self->context = pa_context_new_with_proplist (self->mainloop_api, NULL, proplist);
@@ -313,7 +313,7 @@ nd_pulseaudio_get_source (NdPulseaudio *self)
 
   g_object_set (src,
                 "device", ND_PA_MONITOR,
-                "client-name", "GNOME-Nd Audio Grabber",
+                "client-name", "GNOME Network Displays Audio Grabber",
                 "do-timestamp", TRUE,
                 "server", pa_context_get_server (self->context),
                 NULL);

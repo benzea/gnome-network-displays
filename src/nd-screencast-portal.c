@@ -91,7 +91,7 @@ init_check_dbus_error (GObject      *source_object,
         {
           NdScreencastPortal *self = ND_SCREENCAST_PORTAL (g_task_get_source_object (task));
 
-          g_warning ("Error calling DBus method during Nd portal initialization: %s",
+          g_warning ("Error calling DBus method during Screencast portal initialization: %s",
                      error->message);
 
           g_cancellable_cancel (self->cancellable);
