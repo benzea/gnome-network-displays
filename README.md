@@ -23,3 +23,12 @@ sink will be provided that allows connecting on localhost using any RTSP capable
 client to test WFD streaming.
 
 You can connect to rtsp://localhost:7236/wfd1.0 then.
+
+Debugging
+=========
+
+Appropriate video/audio encoders will be selected automatically. You can
+modify the choice by setting the NETWORK_DISPLAYS_H264_ENC and NETWORK_DISPLAYS_AAC_ENC
+environment variables and specifying the gstreamer element to use (if
+supported and detected). run with G_MESSAGES_DEBUG=all to see the selection
+at work during connection establishment.
