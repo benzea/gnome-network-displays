@@ -18,7 +18,7 @@ Mutter currently has an issue when streaming from a multi-monitor setup. See
 Testing
 =======
 
-For testing purposes you can run with ND_DUMMY=1 set. In that case, a dummy
+For testing purposes you can run with NETWORK_DISPLAYS_DUMMY=1 set. In that case, a dummy
 sink will be provided that allows connecting on localhost using any RTSP capable
 client to test WFD streaming.
 

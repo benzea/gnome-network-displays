@@ -340,7 +340,7 @@ gnome_nd_window_init (NdWindow *self)
   self->wfd_p2p_registry = nd_wfd_p2p_registry_new (self->meta_provider);
   nd_sink_list_set_provider (self->find_sink_list, ND_PROVIDER (self->meta_provider));
 
-  if (g_strcmp0 (g_getenv ("ND_DUMMY"), "1") == 0)
+  if (g_strcmp0 (g_getenv ("NETWORK_DISPLAYS_DUMMY"), "1") == 0)
     {
       g_autoptr(NdDummyProvider) dummy_provider = NULL;
 
