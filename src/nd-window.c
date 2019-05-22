@@ -47,6 +47,7 @@ struct _NdWindow
   NdSink              *stream_sink;
 
   /* Template widgets */
+  GtkStack   *has_providers_stack;
   GtkStack   *step_stack;
   NdSinkList *find_sink_list;
 
@@ -250,6 +251,7 @@ gnome_nd_window_class_init (NdWindowClass *klass)
   ND_TYPE_SINK_LIST;
 
   gtk_widget_class_set_template_from_resource (widget_class, "/org/gnome/screencast/nd-window.ui");
+  gtk_widget_class_bind_template_child (widget_class, NdWindow, has_providers_stack);
   gtk_widget_class_bind_template_child (widget_class, NdWindow, step_stack);
   gtk_widget_class_bind_template_child (widget_class, NdWindow, find_sink_list);
   gtk_widget_class_bind_template_child (widget_class, NdWindow, connect_sink_list);
@@ -329,6 +331,19 @@ stream_stop_clicked_cb (NdWindow *self)
 }
 
 static void
+on_meta_provider_has_provider_changed_cb (NdWindow *self, NdSinkRow *row, NdSinkList *sink_list)
+{
+  gboolean has_providers;
+
+  g_object_get (self->meta_provider,
+                "has-providers", &has_providers,
+                NULL);
+  g_print ("hsa providers changed: %i\n", has_providers);
+  gtk_stack_set_visible_child_name (self->has_providers_stack,
+                                    has_providers ? "has-providers" : "no-providers");
+}
+
+static void
 gnome_nd_window_init (NdWindow *self)
 {
   NdScreencastPortal *portal;
@@ -337,6 +352,12 @@ gnome_nd_window_init (NdWindow *self)
   gtk_widget_init_template (GTK_WIDGET (self));
 
   self->meta_provider = nd_meta_provider_new ();
+  g_signal_connect_object (self->meta_provider,
+                           "notify::has-providers",
+                           (GCallback) on_meta_provider_has_provider_changed_cb,
+                           self,
+                           G_CONNECT_SWAPPED);
+
   self->wfd_p2p_registry = nd_wfd_p2p_registry_new (self->meta_provider);
   nd_sink_list_set_provider (self->find_sink_list, ND_PROVIDER (self->meta_provider));
 
