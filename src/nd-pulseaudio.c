@@ -148,9 +148,9 @@ on_pa_nd_sink_got_info (pa_context         *c,
    * This means no screencast sink exist, and we need to create it. */
   self->operation = pa_context_load_module (self->context,
                                             "module-null-sink",
-                                            "sink_name=gnome_screencast "
+                                            "sink_name=gnome_network_displays "
                                             "rate=48000 "
-                                            "sink_properties=device.description=\"GNOME-Nd\""
+                                            "sink_properties=device.description=\"Network-Displays\""
                                             "device.class=\"sound\""
                                             "device.icon_name=\"network-wireless\"",
                                             on_pa_null_module_loaded,

@@ -4,6 +4,9 @@ The application will stream the selected monitor if the mutter screencast
 portal is available. If it is unavailable, a fallback to X11 based frame
 grabbing will happen. As such, it should work fine in almost all setups.
 
+To get audio streaming, you need to change the audio output in pulseaudio
+to use the created "Network-Displays" sink.
+
 To use it, you will need:
  * openh264 or x264
  * For audio supporting using AAC one of fdkaacenc, faac or avenc_aac
