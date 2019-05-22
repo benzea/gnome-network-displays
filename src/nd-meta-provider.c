@@ -32,10 +32,13 @@ struct _NdMetaProvider
 };
 
 enum {
-  PROP_DISCOVER = 1,
+  PROP_HAS_PROVIDERS = 1,
+  PROP_DISCOVER,
 
   PROP_LAST = PROP_DISCOVER,
 };
+
+static GParamSpec * props[PROP_LAST] = { NULL, };
 
 static void nd_meta_provider_provider_iface_init (NdProviderIface *iface);
 static GList * nd_meta_provider_provider_get_sinks (NdProvider *provider);
@@ -168,6 +171,10 @@ nd_meta_provider_get_property (GObject    *object,
       g_value_set_boolean (value, self->discover);
       break;
 
+    case PROP_HAS_PROVIDERS:
+      g_value_set_boolean (value, self->providers->len > 0);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -225,6 +232,14 @@ nd_meta_provider_class_init (NdMetaProviderClass *klass)
   object_class->finalize = nd_meta_provider_finalize;
 
   g_object_class_override_property (object_class, PROP_DISCOVER, "discover");
+
+  props[PROP_HAS_PROVIDERS] =
+    g_param_spec_boolean ("has-providers", "Has Providers",
+                          "The meta provider has a provider.",
+                          FALSE,
+                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
+  g_object_class_install_properties (object_class, PROP_LAST, props);
 }
 
 static void
@@ -326,6 +341,8 @@ nd_meta_provider_add_provider (NdMetaProvider *meta_provider,
       provider_sink_added_cb (meta_provider, ND_SINK (item->data), provider);
       item = item->next;
     }
+
+  g_object_notify_by_pspec (G_OBJECT (meta_provider), props[PROP_HAS_PROVIDERS]);
 }
 
 /**
@@ -355,6 +372,8 @@ nd_meta_provider_remove_provider (NdMetaProvider *meta_provider,
     }
 
   g_assert (g_ptr_array_remove (meta_provider->providers, provider));
+
+  g_object_notify_by_pspec (G_OBJECT (meta_provider), props[PROP_HAS_PROVIDERS]);
 }
 
 NdMetaProvider *
