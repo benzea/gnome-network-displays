@@ -25,8 +25,8 @@ typedef enum {
 
 static const gchar *aac_encoders[ENCODER_AAC_NONE] = {
   "fdkaacenc",
-  "faac",
   "avenc_aac",
+  "faac",
 };
 
 struct _WfdMediaFactory
