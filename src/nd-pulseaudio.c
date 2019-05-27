@@ -4,7 +4,7 @@
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (pa_proplist, pa_proplist_free)
 
-#define ND_PA_SINK "gnome_screencast"
+#define ND_PA_SINK "gnome_network_displays"
 #define ND_PA_MONITOR ND_PA_SINK ".monitor"
 
 struct _NdPulseaudio
@@ -148,7 +148,7 @@ on_pa_nd_sink_got_info (pa_context         *c,
    * This means no screencast sink exist, and we need to create it. */
   self->operation = pa_context_load_module (self->context,
                                             "module-null-sink",
-                                            "sink_name=gnome_network_displays "
+                                            "sink_name=" ND_PA_SINK " "
                                             "rate=48000 "
                                             "sink_properties=device.description=\"Network-Displays\""
                                             "device.class=\"sound\""
