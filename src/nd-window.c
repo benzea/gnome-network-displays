@@ -338,7 +338,6 @@ on_meta_provider_has_provider_changed_cb (NdWindow *self, NdSinkRow *row, NdSink
   g_object_get (self->meta_provider,
                 "has-providers", &has_providers,
                 NULL);
-  g_print ("hsa providers changed: %i\n", has_providers);
   gtk_stack_set_visible_child_name (self->has_providers_stack,
                                     has_providers ? "has-providers" : "no-providers");
 }
