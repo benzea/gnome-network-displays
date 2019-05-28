@@ -4,6 +4,7 @@ subdir('wfd')
 gnome_nd_sources = [
   'main.c',
   'nd-window.c',
+  'nd-codec-install.c',
   'nd-sink-list.c',
   'nd-sink-row.c',
   'nd-sink.c',
@@ -31,6 +32,7 @@ gnome_nd_deps = [
   dependency('gtk+-3.0', version: '>= 3.22'),
   dependency('libnm', version: '>= 1.15'),
   dependency('gstreamer-1.0', version: '>= 1.14'),
+  dependency('gstreamer-pbutils-1.0', version: '>= 1.14'),
   dependency('libpulse-mainloop-glib'),
 ]
 
