@@ -14,6 +14,9 @@ typedef enum {
 
 WfdMediaFactory * wfd_media_factory_new (void);
 
+gboolean          wfd_get_missing_codecs (GStrv *video,
+                                          GStrv *audio);
+
 /* Just because it is convenient to have next to the pipeline creation code */
 WfdMediaQuirks wfd_configure_media_element (GstBin    *bin,
                                             WfdParams *params);

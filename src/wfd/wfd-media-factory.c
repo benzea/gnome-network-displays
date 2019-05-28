@@ -10,10 +10,11 @@ typedef enum {
   ENCODER_NONE,
 } WfdH264Encoder;
 
-static const gchar *h264_encoders[ENCODER_NONE] = {
+static const gchar *h264_encoders[ENCODER_NONE + 1] = {
   "openh264enc",
   "x264enc",
   "vaapih264enc",
+  NULL,
 };
 
 typedef enum {
@@ -23,10 +24,11 @@ typedef enum {
   ENCODER_AAC_NONE,
 } WfdAACEncoder;
 
-static const gchar *aac_encoders[ENCODER_AAC_NONE] = {
+static const gchar *aac_encoders[ENCODER_AAC_NONE + 1] = {
   "fdkaacenc",
   "avenc_aac",
   "faac",
+  NULL,
 };
 
 struct _WfdMediaFactory
@@ -725,51 +727,95 @@ wfd_media_factory_class_init (WfdMediaFactoryClass *klass)
                   GST_TYPE_ELEMENT, 0);
 }
 
+static gboolean
+wfd_media_factory_lookup_encoders (WfdMediaFactory *self,
+                                   GStrv           *missing_video,
+                                   GStrv           *missing_audio)
+{
+  WfdH264Encoder h264_encoder, h264_selected;
+  WfdAACEncoder aac_encoder, aac_selected;
+
+  /* Default to openh264 and assume it is usable, prefer x264enc when available. */
+  h264_selected = ENCODER_NONE;
+
+  for (h264_encoder = ENCODER_OPENH264; h264_encoder < ENCODER_NONE; h264_encoder++)
+    {
+      g_autoptr(GstElementFactory) encoder_factory = NULL;
+
+      encoder_factory = gst_element_factory_find (h264_encoders[h264_encoder]);
+      if (encoder_factory)
+        {
+          g_debug ("Found %s for video encoding.", h264_encoders[h264_encoder]);
+          h264_selected = h264_encoder;
+
+          /* Don't continue searching if the user specified this encoder. */
+          if (g_strcmp0 (g_getenv ("NETWORK_DISPLAYS_H264_ENC"), h264_encoders[h264_encoder]) == 0)
+            break;
+        }
+    }
+
+  if (h264_selected == ENCODER_NONE)
+    {
+      g_debug ("WFD: Did not find any usable H264 video encoder, missing dependencies!");
+
+      if (missing_video)
+        *missing_video = (GStrv) h264_encoders;
+    }
+
+  aac_selected = ENCODER_AAC_NONE;
+
+  for (aac_encoder = ENCODER_AAC_FDK; aac_encoder < ENCODER_AAC_NONE; aac_encoder++)
+    {
+      g_autoptr(GstElementFactory) encoder_factory = NULL;
+
+      encoder_factory = gst_element_factory_find (aac_encoders[aac_encoder]);
+      if (encoder_factory)
+        {
+          g_debug ("Found %s for audio encoding.", aac_encoders[aac_encoder]);
+          aac_selected = aac_encoder;
+
+          /* Don't continue searching if the user specified this encoder. */
+          if (g_strcmp0 (g_getenv ("NETWORK_DISPLAYS_AAC_ENC"), aac_encoders[aac_encoder]) == 0)
+            break;
+        }
+    }
+
+  aac_selected = ENCODER_AAC_NONE;
+  if (aac_selected == ENCODER_AAC_NONE)
+    {
+      g_debug ("WFD: Did not find any usable AAC audio encoder!");
+
+      if (missing_audio)
+        *missing_audio = (GStrv) aac_encoders;
+    }
+
+
+  if (self)
+    {
+      self->encoder = h264_selected;
+      self->aac_encoder = aac_selected;
+    }
+
+  return h264_selected != ENCODER_NONE;
+}
+
 static void
 wfd_media_factory_init (WfdMediaFactory *self)
 {
-  WfdH264Encoder h264_encoder;
-  WfdAACEncoder aac_encoder;
   GstRTSPMediaFactory *media_factory = GST_RTSP_MEDIA_FACTORY (self);
 
-  /* Default to openh264 and assume it is usable, prefer x264enc when available. */
-  self->encoder = ENCODER_NONE;
-
-  for (h264_encoder = ENCODER_OPENH264; h264_encoder < ENCODER_NONE; h264_encoder++) {
-    g_autoptr(GstElementFactory) encoder_factory = NULL;
-
-    encoder_factory = gst_element_factory_find (h264_encoders[h264_encoder]);
-    if (encoder_factory) {
-      g_debug ("Found %s for video encoding.", h264_encoders[h264_encoder]);
-      self->encoder = h264_encoder;
-
-      /* Don't continue searching if the user specified this encoder. */
-      if (g_strcmp0 (g_getenv ("NETWORK_DISPLAYS_H264_ENC"), h264_encoders[h264_encoder]) == 0)
-        break;
-    }
-  }
-
-  if (self->encoder == ENCODER_NONE)
-    g_error ("WFD: Did not find any usable H264 video encoder, missing dependencies!");
-
-
-  self->aac_encoder = ENCODER_AAC_NONE;
-
-  for (aac_encoder = ENCODER_AAC_FDK; aac_encoder < ENCODER_AAC_NONE; aac_encoder++) {
-    g_autoptr(GstElementFactory) encoder_factory = NULL;
-
-    encoder_factory = gst_element_factory_find (aac_encoders[aac_encoder]);
-    if (encoder_factory) {
-      g_debug ("Found %s for audio encoding.", aac_encoders[aac_encoder]);
-      self->aac_encoder = aac_encoder;
-
-      /* Don't continue searching if the user specified this encoder. */
-      if (g_strcmp0 (g_getenv ("NETWORK_DISPLAYS_AAC_ENC"), aac_encoders[aac_encoder]) == 0)
-        break;
-    }
-  }
+  g_assert (wfd_media_factory_lookup_encoders (self, NULL, NULL));
 
   gst_rtsp_media_factory_set_media_gtype (media_factory, WFD_TYPE_MEDIA);
   gst_rtsp_media_factory_set_suspend_mode (media_factory, GST_RTSP_SUSPEND_MODE_RESET);
   gst_rtsp_media_factory_set_buffer_size (media_factory, 65536);
+}
+
+gboolean
+wfd_get_missing_codecs (GStrv *video, GStrv *audio)
+{
+  *video = NULL;
+  *audio = NULL;
+
+  return wfd_media_factory_lookup_encoders (NULL, video, audio);
 }
