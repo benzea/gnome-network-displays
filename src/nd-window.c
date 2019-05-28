@@ -140,16 +140,22 @@ sink_notify_state_cb (NdWindow *self, GParamSpec *pspec, NdSink *sink)
     case ND_SINK_STATE_WAIT_P2P:
       gtk_label_set_text (self->connect_state_label,
                           _("Making P2P connection"));
+
+      gtk_stack_set_visible_child_name (self->step_stack, "connect");
       break;
 
     case ND_SINK_STATE_WAIT_SOCKET:
       gtk_label_set_text (self->connect_state_label,
                           _("Establishing connection to sink"));
+
+      gtk_stack_set_visible_child_name (self->step_stack, "connect");
       break;
 
     case ND_SINK_STATE_WAIT_STREAMING:
       gtk_label_set_text (self->connect_state_label,
                           _("Starting to stream"));
+
+      gtk_stack_set_visible_child_name (self->step_stack, "connect");
       break;
 
     case ND_SINK_STATE_STREAMING:
@@ -223,8 +229,10 @@ find_sink_list_row_activated_cb (NdWindow *self, NdSinkRow *row, NdSinkList *sin
                            self,
                            G_CONNECT_SWAPPED);
 
+  /* We might have moved into the error state in the meantime. */
+  sink_notify_state_cb (self, NULL, self->stream_sink);
+
   g_object_set (self->meta_provider, "discover", FALSE, NULL);
-  gtk_stack_set_visible_child_name (self->step_stack, "connect");
   gtk_container_add (GTK_CONTAINER (self->connect_sink_list),
                      GTK_WIDGET (nd_sink_row_new (self->stream_sink)));
 }
