@@ -293,7 +293,7 @@ nd_screencast_portal_init_async_cb (GObject      *source_object,
            * more specific warning then.
            */
           if (g_error_matches (error, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_METHOD))
-            g_warning ("Nding portal is unavailable! It is required to select the monitor to stream!");
+            g_warning ("Screencasting portal is unavailable! It is required to select the monitor to stream!");
 
           g_warning ("Falling back to X11! You need to fix your setup to avoid issues (XDG Portals and/or mutter screencasting support)!");
           window->use_x11 = TRUE;
