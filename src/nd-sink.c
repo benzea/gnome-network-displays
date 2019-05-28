@@ -70,6 +70,20 @@ nd_sink_default_init (NdSinkIface *iface)
                                                           ND_TYPE_SINK_STATE,
                                                           ND_SINK_STATE_DISCONNECTED,
                                                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+  g_object_interface_install_property (iface,
+                                       g_param_spec_boxed ("missing-video-codec",
+                                                           "Missing Video Codec",
+                                                           "One of the video codecs elements in the list is required.",
+                                                           G_TYPE_STRV,
+                                                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+  g_object_interface_install_property (iface,
+                                       g_param_spec_boxed ("missing-audio-codec",
+                                                           "Missing Audio Codec",
+                                                           "One of the audio codec elements in the list is required.",
+                                                           G_TYPE_STRV,
+                                                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 }
 
 /**

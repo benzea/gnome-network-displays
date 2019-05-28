@@ -20,12 +20,16 @@
 #include "nd-dummy-wfd-sink.h"
 #include "wfd/wfd-server.h"
 #include "wfd/wfd-client.h"
+#include "wfd/wfd-media-factory.h"
 
 struct _NdDummyWFDSink
 {
   GObject     parent_instance;
 
   NdSinkState state;
+
+  GStrv       missing_video_codec;
+  GStrv       missing_audio_codec;
 
   WfdServer  *server;
   guint       server_source_id;
@@ -40,6 +44,8 @@ enum {
   PROP_MATCHES,
   PROP_PRIORITY,
   PROP_STATE,
+  PROP_MISSING_VIDEO_CODEC,
+  PROP_MISSING_AUDIO_CODEC,
 
   PROP_LAST = PROP_DISPLAY_NAME,
 };
@@ -87,6 +93,14 @@ nd_dummy_wfd_sink_get_property (GObject    *object,
       g_value_set_enum (value, sink->state);
       break;
 
+    case PROP_MISSING_VIDEO_CODEC:
+      g_value_set_boxed (value, sink->missing_video_codec);
+      break;
+
+    case PROP_MISSING_AUDIO_CODEC:
+      g_value_set_boxed (value, sink->missing_audio_codec);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -96,7 +110,12 @@ nd_dummy_wfd_sink_get_property (GObject    *object,
 void
 nd_dummy_wfd_sink_finalize (GObject *object)
 {
+  NdDummyWFDSink *sink = ND_DUMMY_WFD_SINK (object);
+
   nd_dummy_wfd_sink_sink_stop_stream (ND_SINK (object));
+
+  g_clear_pointer (&sink->missing_video_codec, g_strfreev);
+  g_clear_pointer (&sink->missing_audio_codec, g_strfreev);
 
   G_OBJECT_CLASS (nd_dummy_wfd_sink_parent_class)->finalize (object);
 }
@@ -113,6 +132,8 @@ nd_dummy_wfd_sink_class_init (NdDummyWFDSinkClass *klass)
   g_object_class_override_property (object_class, PROP_MATCHES, "matches");
   g_object_class_override_property (object_class, PROP_PRIORITY, "priority");
   g_object_class_override_property (object_class, PROP_STATE, "state");
+  g_object_class_override_property (object_class, PROP_MISSING_VIDEO_CODEC, "missing-video-codec");
+  g_object_class_override_property (object_class, PROP_MISSING_AUDIO_CODEC, "missing-audio-codec");
 }
 
 static void
@@ -195,22 +216,32 @@ static NdSink *
 nd_dummy_wfd_sink_sink_start_stream (NdSink *sink)
 {
   NdDummyWFDSink *self = ND_DUMMY_WFD_SINK (sink);
+  gboolean have_basic_codecs;
+  GStrv missing_video, missing_audio;
 
   g_return_val_if_fail (self->state == ND_SINK_STATE_DISCONNECTED, NULL);
 
   g_assert (self->server == NULL);
 
+  have_basic_codecs = wfd_get_missing_codecs (&missing_video, &missing_audio);
+
+  g_clear_pointer (&self->missing_video_codec, g_strfreev);
+  g_clear_pointer (&self->missing_audio_codec, g_strfreev);
+
+  self->missing_video_codec = g_strdupv (missing_video);
+  self->missing_audio_codec = g_strdupv (missing_audio);
+
+  g_object_notify (G_OBJECT (self), "missing-video-codec");
+  g_object_notify (G_OBJECT (self), "missing-audio-codec");
+
+  if (!have_basic_codecs)
+    goto error;
+
   self->server = wfd_server_new ();
   self->server_source_id = gst_rtsp_server_attach (GST_RTSP_SERVER (self->server), NULL);
 
   if (self->server_source_id == 0)
-    {
-      self->state = ND_SINK_STATE_ERROR;
-      g_object_notify (G_OBJECT (self), "state");
-      g_clear_object (&self->server);
-
-      return NULL;
-    }
+    goto error;
 
   g_debug ("NdDummyWFDSink: You should now be able to connect to rtsp://localhost:7236/wfd1.0");
 
@@ -234,6 +265,14 @@ nd_dummy_wfd_sink_sink_start_stream (NdSink *sink)
 
   self->state = ND_SINK_STATE_WAIT_SOCKET;
   g_object_notify (G_OBJECT (self), "state");
+
+  return g_object_ref (sink);
+
+error:
+  g_warning ("Error starting stream!");
+  self->state = ND_SINK_STATE_ERROR;
+  g_object_notify (G_OBJECT (self), "state");
+  g_clear_object (&self->server);
 
   return g_object_ref (sink);
 }

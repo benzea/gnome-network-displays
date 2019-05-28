@@ -21,6 +21,7 @@
 #include "nd-window.h"
 #include "nd-sink-list.h"
 #include "nd-sink-row.h"
+#include "nd-codec-install.h"
 #include "nd-meta-provider.h"
 #include "nd-wfd-p2p-registry.h"
 #include "nd-dummy-provider.h"
@@ -46,6 +47,8 @@ struct _NdWindow
 
   NdSink              *stream_sink;
 
+  GPtrArray           *sink_property_bindings;
+
   /* Template widgets */
   GtkStack   *has_providers_stack;
   GtkStack   *step_stack;
@@ -57,9 +60,13 @@ struct _NdWindow
 
   GtkListBox *stream_sink_list;
   GtkLabel   *stream_state_label;
+  GtkBox     *stream_video_install;
+  GtkBox     *stream_audio_install;
   GtkButton  *stream_cancel;
 
   GtkListBox *error_sink_list;
+  GtkBox     *error_video_install;
+  GtkBox     *error_audio_install;
   GtkButton  *error_return;
 };
 
@@ -186,6 +193,8 @@ sink_notify_state_cb (NdWindow *self, GParamSpec *pspec, NdSink *sink)
       gtk_stack_set_visible_child_name (self->step_stack, "find");
       g_object_set (self->meta_provider, "discover", TRUE, NULL);
 
+      g_ptr_array_set_size (self->sink_property_bindings, 0);
+
       g_signal_handlers_disconnect_by_data (self->stream_sink, self);
       g_clear_object (&self->stream_sink);
       break;
@@ -232,6 +241,34 @@ find_sink_list_row_activated_cb (NdWindow *self, NdSinkRow *row, NdSinkList *sin
   /* We might have moved into the error state in the meantime. */
   sink_notify_state_cb (self, NULL, self->stream_sink);
 
+  g_ptr_array_add (self->sink_property_bindings,
+                   g_object_bind_property (self->stream_sink,
+                                           "missing-video-codec",
+                                           self->stream_video_install,
+                                           "codecs",
+                                           G_BINDING_SYNC_CREATE));
+
+  g_ptr_array_add (self->sink_property_bindings,
+                   g_object_bind_property (self->stream_sink,
+                                           "missing-audio-codec",
+                                           self->stream_audio_install,
+                                           "codecs",
+                                           G_BINDING_SYNC_CREATE));
+
+  g_ptr_array_add (self->sink_property_bindings,
+                   g_object_bind_property (self->stream_sink,
+                                           "missing-video-codec",
+                                           self->error_video_install,
+                                           "codecs",
+                                           G_BINDING_SYNC_CREATE));
+
+  g_ptr_array_add (self->sink_property_bindings,
+                   g_object_bind_property (self->stream_sink,
+                                           "missing-audio-codec",
+                                           self->error_audio_install,
+                                           "codecs",
+                                           G_BINDING_SYNC_CREATE));
+
   g_object_set (self->meta_provider, "discover", FALSE, NULL);
   gtk_container_add (GTK_CONTAINER (self->connect_sink_list),
                      GTK_WIDGET (nd_sink_row_new (self->stream_sink)));
@@ -245,6 +282,8 @@ gnome_nd_window_finalize (GObject *obj)
   g_clear_object (&self->meta_provider);
   g_clear_object (&self->wfd_p2p_registry);
 
+  g_clear_pointer (&self->sink_property_bindings, g_ptr_array_unref);
+
   G_OBJECT_CLASS (gnome_nd_window_parent_class)->finalize (obj);
 }
 
@@ -257,6 +296,7 @@ gnome_nd_window_class_init (NdWindowClass *klass)
   object_class->finalize = gnome_nd_window_finalize;
 
   ND_TYPE_SINK_LIST;
+  ND_TYPE_CODEC_INSTALL;
 
   gtk_widget_class_set_template_from_resource (widget_class, "/org/gnome/screencast/nd-window.ui");
   gtk_widget_class_bind_template_child (widget_class, NdWindow, has_providers_stack);
@@ -267,8 +307,12 @@ gnome_nd_window_class_init (NdWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, NdWindow, connect_cancel);
   gtk_widget_class_bind_template_child (widget_class, NdWindow, stream_sink_list);
   gtk_widget_class_bind_template_child (widget_class, NdWindow, stream_state_label);
+  gtk_widget_class_bind_template_child (widget_class, NdWindow, stream_video_install);
+  gtk_widget_class_bind_template_child (widget_class, NdWindow, stream_audio_install);
   gtk_widget_class_bind_template_child (widget_class, NdWindow, stream_cancel);
   gtk_widget_class_bind_template_child (widget_class, NdWindow, error_sink_list);
+  gtk_widget_class_bind_template_child (widget_class, NdWindow, error_video_install);
+  gtk_widget_class_bind_template_child (widget_class, NdWindow, error_audio_install);
   gtk_widget_class_bind_template_child (widget_class, NdWindow, error_return);
 }
 
@@ -418,4 +462,6 @@ gnome_nd_window_init (NdWindow *self)
                                self->cancellable,
                                nd_pulseaudio_init_async_cb,
                                self);
+
+  self->sink_property_bindings = g_ptr_array_new_full (0, (GDestroyNotify) g_binding_unbind);
 }

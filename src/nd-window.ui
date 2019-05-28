@@ -22,12 +22,6 @@
         <property name="transition_type">slide-left-right</property>
         <property name="interpolate_size">True</property>
         <child>
-          <placeholder/>
-        </child>
-        <child>
-          <placeholder/>
-        </child>
-        <child>
           <object class="GtkStack" id="has_providers_stack">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
@@ -271,11 +265,7 @@
           </object>
           <packing>
             <property name="name">find</property>
-            <property name="position">2</property>
           </packing>
-        </child>
-        <child>
-          <placeholder/>
         </child>
         <child>
           <object class="GtkScrolledWindow">
@@ -308,7 +298,8 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkBox">
+                      <object class="GtkBox" id="box1">
+                        <property name="width_request">400</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_top">32</property>
@@ -451,7 +442,7 @@
           </object>
           <packing>
             <property name="name">connect</property>
-            <property name="position">4</property>
+            <property name="position">1</property>
           </packing>
         </child>
         <child>
@@ -485,7 +476,8 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkBox">
+                      <object class="GtkBox" id="box2">
+                        <property name="width_request">400</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_top">32</property>
@@ -558,6 +550,22 @@
                           </packing>
                         </child>
                         <child>
+                          <object class="NdCodecInstall" id="stream_video_install">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="title" translatable="yes">One of the following video codec plugins is required.
+Clicking will start the installation process.</property>
+                            <child>
+                              <placeholder/>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">2</property>
+                          </packing>
+                        </child>
+                        <child>
                           <object class="GtkBox">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
@@ -584,6 +592,22 @@
                             <property name="fill">True</property>
                             <property name="pack_type">end</property>
                             <property name="position">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="NdCodecInstall" id="stream_audio_install">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="title" translatable="yes">One of the following audio codec plugins is required for audio support.
+Clicking will start the installation process.</property>
+                            <child>
+                              <placeholder/>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">4</property>
                           </packing>
                         </child>
                       </object>
@@ -615,7 +639,7 @@
           </object>
           <packing>
             <property name="name">stream</property>
-            <property name="position">5</property>
+            <property name="position">2</property>
           </packing>
         </child>
         <child>
@@ -649,7 +673,8 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkBox">
+                      <object class="GtkBox" id="box3">
+                        <property name="width_request">400</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_top">32</property>
@@ -750,6 +775,38 @@
                             <property name="position">2</property>
                           </packing>
                         </child>
+                        <child>
+                          <object class="NdCodecInstall" id="error_video_install">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="title" translatable="yes">One of the following video codec plugins is required.
+Clicking will start the installation process.</property>
+                            <child>
+                              <placeholder/>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">3</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="NdCodecInstall" id="error_audio_install">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="title" translatable="yes">One of the following audio codec plugins is required for audio support.
+Clicking will start the installation process.</property>
+                            <child>
+                              <placeholder/>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">4</property>
+                          </packing>
+                        </child>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -779,13 +836,17 @@
           </object>
           <packing>
             <property name="name">error</property>
-            <property name="position">6</property>
+            <property name="position">3</property>
           </packing>
-        </child>
-        <child>
-          <placeholder/>
         </child>
       </object>
     </child>
   </template>
+  <object class="GtkSizeGroup">
+    <widgets>
+      <widget name="box1"/>
+      <widget name="box2"/>
+      <widget name="box3"/>
+    </widgets>
+  </object>
 </interface>
