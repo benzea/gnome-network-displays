@@ -780,7 +780,6 @@ wfd_media_factory_lookup_encoders (WfdMediaFactory *self,
         }
     }
 
-  aac_selected = ENCODER_AAC_NONE;
   if (aac_selected == ENCODER_AAC_NONE)
     {
       g_debug ("WFD: Did not find any usable AAC audio encoder!");
