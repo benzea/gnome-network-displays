@@ -148,7 +148,8 @@ on_pa_nd_sink_got_info (pa_context         *c,
    * This means no screencast sink exist, and we need to create it. */
   self->operation = pa_context_load_module (self->context,
                                             "module-null-sink",
-                                            "sink_name=" ND_PA_SINK " "
+                                            "sink_name=" ND_PA_SINK
+                                            " "
                                             "rate=48000 "
                                             "sink_properties=device.description=\"Network-Displays\""
                                             "device.class=\"sound\""
