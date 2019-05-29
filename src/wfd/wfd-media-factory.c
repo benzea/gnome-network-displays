@@ -164,6 +164,9 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
   success &= gst_bin_add (bin, source);
 
   scale = gst_element_factory_make ("videoscale", "wfd-scale");
+  g_object_set (scale,
+                "qos", FALSE,
+                NULL);
   success &= gst_bin_add (bin, scale);
 
   caps = gst_caps_new_simple ("video/x-raw",
@@ -179,6 +182,9 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
   g_clear_pointer (&caps, gst_caps_unref);
 
   convert = gst_element_factory_make ("videoconvert", "wfd-videoconvert");
+  g_object_set (convert,
+                "qos", FALSE,
+                NULL);
   success &= gst_bin_add (bin, convert);
 
   queue_pre_encoder = gst_element_factory_make ("queue", "wfd-pre-encoder-queue");
