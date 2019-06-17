@@ -20,6 +20,7 @@
 #include "nd-wfd-p2p-sink.h"
 #include "wfd/wfd-server.h"
 #include "wfd/wfd-client.h"
+#include "wfd/wfd-media-factory.h"
 
 struct _NdWFDP2PSink
 {
