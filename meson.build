@@ -1,4 +1,5 @@
-project('gnome-network-displays', 'c',        version: '0.1.0',
+project('gnome-network-displays', 'c',
+  version: '0.90.0',
   meson_version: '>= 0.42.0',
 )
 
