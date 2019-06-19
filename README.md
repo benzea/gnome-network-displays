@@ -18,6 +18,17 @@ Issues
 Mutter currently has an issue when streaming from a multi-monitor setup. See
   https://gitlab.gnome.org/GNOME/mutter/issues/424
 
+Devices
+=======
+
+The following devices have been tested:
+ * Measy "Miracast Receiver" Model A2W
+   - Announces itself as EZMirror/EZCast
+   - Only supports uncompressed audio (LPCM) which is not supported yet
+ * LG WebOS TV
+ * MontoView (Software Revision 2.18.02)
+ * MiraScreen
+
 Testing
 =======
 
