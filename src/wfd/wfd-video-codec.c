@@ -253,7 +253,7 @@ wfd_video_codec_unref (WfdVideoCodec *self)
 WfdVideoCodec *
 wfd_video_codec_new_from_desc (gint native, const gchar *descr)
 {
-  g_autoptr(WfdVideoCodec) res;
+  g_autoptr(WfdVideoCodec) res = NULL;
   g_auto(GStrv) tokens = NULL;
   const WfdResolution *native_res;
   guint32 tmp;

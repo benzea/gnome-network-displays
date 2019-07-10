@@ -90,7 +90,7 @@ wfd_audio_codec_unref (WfdAudioCodec *self)
 WfdAudioCodec *
 wfd_audio_codec_new_from_desc (const gchar *descr)
 {
-  g_autoptr(WfdAudioCodec) res;
+  g_autoptr(WfdAudioCodec) res = NULL;
   g_auto(GStrv) tokens = NULL;
 
   tokens = g_strsplit (descr, " ", 3);

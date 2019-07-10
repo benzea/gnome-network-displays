@@ -220,11 +220,10 @@ wfd_client_idle_trigger_setup (gpointer user_data)
 static gchar *
 wfd_client_get_presentation_uri (WfdClient *self)
 {
+  g_autoptr(GSocketAddress) sock_addr = NULL;
   GstRTSPClient *client = GST_RTSP_CLIENT (self);
   GstRTSPConnection *connection;
   GSocket *socket;
-
-  g_autoptr(GSocketAddress) sock_addr;
   GInetAddress *inet_addr;
   g_autofree gchar *addr = NULL;
   gint port;
