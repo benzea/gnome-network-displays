@@ -84,9 +84,15 @@ sink_create_source_cb (NdWindow * self, NdSink * sink)
     src = gst_element_factory_make ("ximagesrc", "X11 screencast source");
   else
     src = nd_screencast_portal_get_source (self->portal);
+
+  if (!src)
+    g_error ("Error creating video source element, likely a missing dependency!");
+
   gst_bin_add (bin, src);
 
   dst = gst_element_factory_make ("intervideosink", "inter video sink");
+  if (!dst)
+    g_error ("Error creating intervideosink, missing dependency!");
   g_object_set (dst,
                 "channel", "nd-inter-video",
                 "max-lateness", (gint64) - 1,
