@@ -49,4 +49,5 @@ wfd_media_class_init (WfdMediaClass *klass)
 static void
 wfd_media_init (WfdMedia *self)
 {
+	gst_rtsp_media_set_stop_on_disconnect (GST_RTSP_MEDIA (self), TRUE);
 }
