@@ -96,6 +96,7 @@ sink_create_source_cb (NdWindow * self, NdSink * sink)
   g_object_set (dst,
                 "channel", "nd-inter-video",
                 "max-lateness", (gint64) - 1,
+                "sync", FALSE,
                 NULL);
   gst_bin_add (bin, dst);
 
