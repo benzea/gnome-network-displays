@@ -165,7 +165,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
 
   scale = gst_element_factory_make ("videoscale", "wfd-scale");
   g_object_set (scale,
-                "qos", FALSE,
+                "qos", TRUE,
                 NULL);
   success &= gst_bin_add (bin, scale);
 
@@ -183,7 +183,7 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
 
   convert = gst_element_factory_make ("videoconvert", "wfd-videoconvert");
   g_object_set (convert,
-                "qos", FALSE,
+                "qos", TRUE,
                 NULL);
   success &= gst_bin_add (bin, convert);
 
