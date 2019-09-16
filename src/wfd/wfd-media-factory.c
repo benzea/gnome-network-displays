@@ -139,8 +139,8 @@ wfd_media_factory_create_element (GstRTSPMediaFactory *factory, const GstRTSPUrl
   g_autoptr(GstPad) encoding_perf_sink = NULL;
   WfdMediaFactory *self = WFD_MEDIA_FACTORY (factory);
   QOSData *qos_data;
-  GstElement *source = NULL;
-  GstElement *audio_source = NULL;
+  g_autoptr(GstElement) source = NULL;
+  g_autoptr(GstElement) audio_source = NULL;
   GstElement *scale;
   GstElement *sizefilter;
   GstElement *convert;

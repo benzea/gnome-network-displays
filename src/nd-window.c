@@ -116,6 +116,7 @@ sink_create_source_cb (NdWindow * self, NdSink * sink)
                                           gst_element_get_static_pad (res,
                                                                       "src")));
 
+  g_object_ref_sink (bin);
   return GST_ELEMENT (bin);
 }
 
@@ -129,7 +130,7 @@ sink_create_audio_source_cb (NdWindow * self, NdSink * sink)
 
   res = nd_pulseaudio_get_source (self->pulse);
 
-  return res;
+  return g_object_ref_sink (res);
 }
 
 static void
