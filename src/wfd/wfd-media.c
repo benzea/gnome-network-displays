@@ -17,6 +17,8 @@ wfd_media_new (void)
 static void
 wfd_media_finalize (GObject *object)
 {
+  g_debug ("WfdMedia: Finalize");
+
   G_OBJECT_CLASS (wfd_media_parent_class)->finalize (object);
 }
 

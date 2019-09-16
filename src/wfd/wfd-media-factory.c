@@ -703,6 +703,8 @@ wfd_media_factory_new (void)
 static void
 wfd_media_factory_finalize (GObject *object)
 {
+  g_debug ("WfdMediaFactory: Finalize");
+
   G_OBJECT_CLASS (wfd_media_factory_parent_class)->finalize (object);
 }
 
