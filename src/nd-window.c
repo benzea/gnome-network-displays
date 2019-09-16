@@ -104,7 +104,7 @@ sink_create_source_cb (NdWindow * self, NdSink * sink)
 
   res = gst_element_factory_make ("intervideosrc", "screencastsrc");
   g_object_set (res,
-                "do-timestamp", TRUE,
+                "do-timestamp", FALSE,
                 "timeout", (guint64) G_MAXUINT64,
                 "channel", "nd-inter-video",
                 NULL);
