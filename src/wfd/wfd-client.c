@@ -185,9 +185,6 @@ wfd_client_configure_client_media (GstRTSPClient * client,
                                    GstRTSPContext * ctx)
 {
   WfdClient *self = WFD_CLIENT (client);
-
-  g_autoptr(GstRTSPThreadPool) thread_pool = NULL;
-  g_autoptr(GstRTSPThread) thread = NULL;
   g_autoptr(GstElement) element = NULL;
   gboolean res;
 
@@ -200,10 +197,6 @@ wfd_client_configure_client_media (GstRTSPClient * client,
   self->media_quirks = wfd_configure_media_element (GST_BIN (element), self->params);
 
   res = GST_RTSP_CLIENT_CLASS (wfd_client_parent_class)->configure_client_media (client, media, stream, ctx);
-
-  thread_pool = gst_rtsp_client_get_thread_pool (client);
-  thread = gst_rtsp_thread_pool_get_thread (thread_pool, GST_RTSP_THREAD_TYPE_MEDIA, ctx);
-  gst_rtsp_media_prepare (media, g_steal_pointer (&thread));
 
   return res;
 }
