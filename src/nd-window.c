@@ -225,8 +225,10 @@ find_sink_list_row_activated_cb (NdWindow *self, NdSinkRow *row, NdSinkList *sin
   sink = nd_sink_row_get_sink (row);
   self->stream_sink = nd_sink_start_stream (sink);
 
-  if (!self->stream_sink)
+  if (!self->stream_sink) {
     g_warning ("NdWindow: Could not start streaming!");
+    return;
+  }
 
   g_signal_connect_object (self->stream_sink,
                            "create-source",
