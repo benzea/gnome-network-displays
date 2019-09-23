@@ -235,11 +235,12 @@ nd_pulseaudio_async_initable_init_async (GAsyncInitable     *initable,
   if (res < 0)
     {
       g_debug ("NdPulseaudio: Error querying sink info");
-      g_task_return_new_error (self->init_task,
-                               G_IO_ERROR,
-                               G_IO_ERROR_FAILED,
-                               "Error connecting to PA: %s",
-                               pa_strerror (pa_context_errno (self->context)));
+      if (self->init_task)
+        g_task_return_new_error (self->init_task,
+                                 G_IO_ERROR,
+                                 G_IO_ERROR_FAILED,
+                                 "Error connecting to PA: %s",
+                                 pa_strerror (pa_context_errno (self->context)));
       g_clear_object (&self->init_task);
       return;
     }
