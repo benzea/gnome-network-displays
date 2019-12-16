@@ -1,0 +1,9 @@
+GNOME Network Displays 0.90.2
+=============================
+
+ * Improve QOS handling/performance of gstreamer pipeline
+ * Fix issue with pipeline never stopping at disconnect
+
+New and updated translations:
+ * Italian
+ * Turkish
