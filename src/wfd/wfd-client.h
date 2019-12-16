@@ -1,6 +1,9 @@
 #pragma once
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <gst/rtsp-server/rtsp-client.h>
+#pragma GCC diagnostic pop
 
 G_BEGIN_DECLS
 

@@ -1,6 +1,9 @@
 #pragma once
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <gst/rtsp-server/rtsp-media-factory.h>
+#pragma GCC diagnostic pop
 #include "wfd-params.h"
 
 G_BEGIN_DECLS

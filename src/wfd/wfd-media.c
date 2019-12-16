@@ -1,4 +1,7 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include "gst/rtsp-server/rtsp-media.h"
+#pragma GCC diagnostic pop
 #include "wfd-media.h"
 
 struct _WfdMedia
