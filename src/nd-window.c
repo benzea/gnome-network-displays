@@ -289,6 +289,14 @@ gnome_nd_window_finalize (GObject *obj)
 {
   NdWindow *self = ND_WINDOW (obj);
 
+  g_cancellable_cancel (self->cancellable);
+  g_clear_object (&self->cancellable);
+
+  g_clear_object (&self->portal);
+  g_clear_object (&self->pulse);
+
+  g_clear_object (&self->stream_sink);
+
   g_clear_object (&self->meta_provider);
   g_clear_object (&self->wfd_p2p_registry);
 
