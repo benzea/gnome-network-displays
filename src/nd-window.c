@@ -252,32 +252,32 @@ find_sink_list_row_activated_cb (NdWindow *self, NdSinkRow *row, NdSinkList *sin
   sink_notify_state_cb (self, NULL, self->stream_sink);
 
   g_ptr_array_add (self->sink_property_bindings,
-                   g_object_bind_property (self->stream_sink,
-                                           "missing-video-codec",
-                                           self->stream_video_install,
-                                           "codecs",
-                                           G_BINDING_SYNC_CREATE));
+                   g_object_ref (g_object_bind_property (self->stream_sink,
+                                                         "missing-video-codec",
+                                                         self->stream_video_install,
+                                                         "codecs",
+                                                         G_BINDING_SYNC_CREATE)));
 
   g_ptr_array_add (self->sink_property_bindings,
-                   g_object_bind_property (self->stream_sink,
-                                           "missing-audio-codec",
-                                           self->stream_audio_install,
-                                           "codecs",
-                                           G_BINDING_SYNC_CREATE));
+                   g_object_ref (g_object_bind_property (self->stream_sink,
+                                                         "missing-audio-codec",
+                                                         self->stream_audio_install,
+                                                         "codecs",
+                                                         G_BINDING_SYNC_CREATE)));
 
   g_ptr_array_add (self->sink_property_bindings,
-                   g_object_bind_property (self->stream_sink,
-                                           "missing-video-codec",
-                                           self->error_video_install,
-                                           "codecs",
-                                           G_BINDING_SYNC_CREATE));
+                   g_object_ref (g_object_bind_property (self->stream_sink,
+                                                         "missing-video-codec",
+                                                         self->error_video_install,
+                                                         "codecs",
+                                                         G_BINDING_SYNC_CREATE)));
 
   g_ptr_array_add (self->sink_property_bindings,
-                   g_object_bind_property (self->stream_sink,
-                                           "missing-audio-codec",
-                                           self->error_audio_install,
-                                           "codecs",
-                                           G_BINDING_SYNC_CREATE));
+                   g_object_ref (g_object_bind_property (self->stream_sink,
+                                                         "missing-audio-codec",
+                                                         self->error_audio_install,
+                                                         "codecs",
+                                                         G_BINDING_SYNC_CREATE)));
 
   g_object_set (self->meta_provider, "discover", FALSE, NULL);
   gtk_container_add (GTK_CONTAINER (self->connect_sink_list),
