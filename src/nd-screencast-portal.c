@@ -364,8 +364,23 @@ nd_screencast_portal_async_initable_iface_init (GAsyncInitableIface *iface)
   iface->init_finish = nd_screencast_portal_async_initable_init_finish;
 }
 
+typedef struct {
+  GCancellable *cancellable;
+  gulong cancel_handler_id;
+} AsyncInitData;
+
 static void
-init_cancelable_cancelled_cb (GTask *task, GCancellable *external)
+async_init_data_free (gpointer user_data)
+{
+  AsyncInitData *data = user_data;
+
+  g_cancellable_disconnect (data->cancellable, data->cancel_handler_id);
+  g_clear_object (&data->cancellable);
+  g_free (data);
+}
+
+static void
+init_cancelable_cancelled_cb (GCancellable *external, GTask *task)
 {
   NdScreencastPortal *self = ND_SCREENCAST_PORTAL (g_task_get_source_object (task));
 
@@ -391,22 +406,24 @@ nd_screencast_portal_async_initable_init_async (GAsyncInitable     *initable,
                                                 gpointer            user_data)
 {
   NdScreencastPortal *self = ND_SCREENCAST_PORTAL (initable);
+  AsyncInitData *data = NULL;
   GTask *task = NULL;
 
   self->cancellable = g_cancellable_new ();
+
+  task = g_task_new (initable, self->cancellable, callback, user_data);
   if (cancellable)
     {
-      g_signal_connect_object (cancellable,
-                               "cancelled",
-                               (GCallback) init_cancelable_cancelled_cb,
-                               self->cancellable,
-                               G_CONNECT_SWAPPED);
+      data = g_new0 (AsyncInitData, 1);
+      data->cancellable = g_object_ref (cancellable);
+
+      data->cancel_handler_id = g_cancellable_connect (cancellable,
+                                                       (GCallback) init_cancelable_cancelled_cb,
+                                                       task,
+                                                       NULL);
+
+      g_task_set_task_data (task, data, async_init_data_free);
     }
-
-  if (g_cancellable_is_cancelled (cancellable))
-    g_cancellable_cancel (self->cancellable);
-
-  task = g_task_new (initable, cancellable, callback, user_data);
 
   g_dbus_proxy_new_for_bus (G_BUS_TYPE_SESSION,
                             G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES,
