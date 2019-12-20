@@ -275,10 +275,30 @@ wfd_client_idle_set_params (gpointer user_data)
   return G_SOURCE_REMOVE;
 }
 
+GstRTSPFilterResult
+wfd_client_touch_session_filter_func (GstRTSPClient  *client,
+                                      GstRTSPSession *sess,
+                                      gpointer        user_data)
+{
+  gst_rtsp_session_touch (sess);
+
+  return GST_RTSP_FILTER_KEEP;
+}
+
 void
 wfd_client_handle_response (GstRTSPClient * client, GstRTSPContext *ctx)
 {
   WfdClient *self = WFD_CLIENT (client);
+
+  /* Some sinks do not reply with the correct session-id. Which causes
+   * gst-rtsp-server to not touch the session, triggering a timeout
+   * even though the sink actually replied.
+   *
+   * Work around this by explicitly touching the session (again). And
+   * to do that, just touch all of them, which is acceptable as we will
+   * only have one.
+   */
+  gst_rtsp_client_session_filter (client, wfd_client_touch_session_filter_func, NULL);
 
   /* Track the initialization process and possibly trigger the
    * next state of the connection establishment. */
