@@ -12,11 +12,15 @@ To use it, you will need:
  * For audio supporting using AAC one of fdkaacenc, faac or avenc_aac
  * NetworkManager version > 1.15.2
 
-Issues
-======
+Build
+=====
 
-Mutter currently has an issue when streaming from a multi-monitor setup. See
-  https://gitlab.gnome.org/GNOME/mutter/issues/424
+To build it locally:
+
+- clone the repository
+- install `meson`
+- run `meson build` on the cloned repository
+- run `meson install` on the `build` folder created by meson
 
 Devices
 =======
