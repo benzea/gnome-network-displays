@@ -62,7 +62,12 @@ peer_added_cb (NdWFDP2PProvider *provider, NMWifiP2PPeer *peer, NMDevice *device
 
   /* Assume this is not a WFD Peer if there are no WFDIEs set. */
   if (!wfd_ies || g_bytes_get_size (wfd_ies) == 0)
-    return;
+    {
+      g_debug ("WFDP2PProvider: Ignoring peer \"%s\" (%s) as it has no WFDIEs set",
+               nm_wifi_p2p_peer_get_name (peer),
+               nm_wifi_p2p_peer_get_hw_address (peer));
+      return;
+    }
 
   g_debug ("WFDP2PProvider: Found a new sink with peer %p on device %p", peer, device);
 
