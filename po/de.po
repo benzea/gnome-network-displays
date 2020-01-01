@@ -53,7 +53,7 @@ msgid ""
 "wpa_supplicant."
 msgstr ""
 "Es wurde kein nutzbares W-Lan Gerät gefunden. Bitte erprüfen Sie, dass W-Lan "
-"eingeschaltet und Wi-Fi P2P sowohl von NewtorkManager als auch von "
+"eingeschaltet und Wi-Fi P2P sowohl von NetworkManager als auch von "
 "wpa_supplicant unterstützt wird."
 
 #: src/nd-window.ui:174
