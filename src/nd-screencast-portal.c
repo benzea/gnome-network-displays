@@ -392,7 +392,7 @@ init_cancelable_cancelled_cb (GCancellable *external, GTask *task)
       self->portal_signal_id = 0;
     }
 
-  /* Cancel the task and return it immediately. */
+  /* Cancel the underlying action and return the task immediately. */
   g_cancellable_cancel (self->cancellable);
   g_task_return_error_if_cancelled (task);
   g_object_unref (task);
@@ -411,7 +411,10 @@ nd_screencast_portal_async_initable_init_async (GAsyncInitable     *initable,
 
   self->cancellable = g_cancellable_new ();
 
-  task = g_task_new (initable, self->cancellable, callback, user_data);
+  /* NOTE: We use the external cancellable here, because we may
+   *       otherwise return G_IO_ERROR_CANCELLED for some error
+   *       conditions. */
+  task = g_task_new (initable, cancellable, callback, user_data);
   if (cancellable)
     {
       data = g_new0 (AsyncInitData, 1);
