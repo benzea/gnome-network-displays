@@ -125,12 +125,22 @@ nd_wfd_p2p_provider_get_property (GObject    *object,
     }
 }
 
+static void
+log_start_find_error (GObject *source, GAsyncResult *res, gpointer user_data)
+{
+  g_autoptr(GError) error = NULL;
+  NMDeviceWifiP2P *p2p_dev = NM_DEVICE_WIFI_P2P (source);
+
+  if (!nm_device_wifi_p2p_start_find_finish (p2p_dev, res, &error))
+    g_warning ("Could not start P2P find: %s", error->message);
+}
+
 static gboolean
 device_restart_find_timeout (gpointer user_data)
 {
   NdWFDP2PProvider *provider = ND_WFD_P2P_PROVIDER (user_data);
 
-  nm_device_wifi_p2p_start_find (NM_DEVICE_WIFI_P2P (provider->nm_device), NULL, NULL, NULL, NULL);
+  nm_device_wifi_p2p_start_find (NM_DEVICE_WIFI_P2P (provider->nm_device), NULL, NULL, log_start_find_error, NULL);
 
   return G_SOURCE_CONTINUE;
 }
@@ -169,7 +179,7 @@ nd_wfd_p2p_provider_set_property (GObject      *object,
 
       if (provider->discover)
         {
-          nm_device_wifi_p2p_start_find (NM_DEVICE_WIFI_P2P (provider->nm_device), NULL, NULL, NULL, NULL);
+          nm_device_wifi_p2p_start_find (NM_DEVICE_WIFI_P2P (provider->nm_device), NULL, NULL, log_start_find_error, NULL);
           provider->p2p_find_source_id = g_timeout_add_seconds (20, device_restart_find_timeout, provider);
         }
 
@@ -185,7 +195,7 @@ nd_wfd_p2p_provider_set_property (GObject      *object,
 
       if (provider->discover)
         {
-          nm_device_wifi_p2p_start_find (NM_DEVICE_WIFI_P2P (provider->nm_device), NULL, NULL, NULL, NULL);
+          nm_device_wifi_p2p_start_find (NM_DEVICE_WIFI_P2P (provider->nm_device), NULL, NULL, log_start_find_error, NULL);
           if (!provider->p2p_find_source_id)
             provider->p2p_find_source_id = g_timeout_add_seconds (20, device_restart_find_timeout, provider);
         }
