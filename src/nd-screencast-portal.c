@@ -259,6 +259,7 @@ portal_create_session_response_received (GDBusConnection *connection,
                                G_IO_ERROR_FAILED,
                                "Failed to create portal session (response: %u)",
                                response);
+      g_object_unref (task);
       return;
     }
 
@@ -320,6 +321,7 @@ on_portal_nd_proxy_acquired (GObject      *source_object,
         g_warning ("Could not create screencast portal proxy: %s", error->message);
 
       g_task_return_error (task, g_steal_pointer (&error));
+      g_object_unref (&task);
       return;
     }
 
