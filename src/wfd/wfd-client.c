@@ -176,7 +176,7 @@ wfd_client_select_codec_and_resolution (WfdClient *self, WfdH264ProfileFlags pro
       WfdAudioCodec *codec = g_ptr_array_index (self->params->audio_codecs, i);
 
       /* Accept AAC with 48KHz and 2 channels; this is currently hardcoded in the media factory */
-      if (codec->type == WFD_AUDIO_AAC && (codec->modes = 0x1))
+      if (codec->type == WFD_AUDIO_AAC && codec->modes & 0x1)
         {
           self->params->selected_audio_codec = wfd_audio_codec_new ();
           self->params->selected_audio_codec->type = WFD_AUDIO_AAC;
