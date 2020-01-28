@@ -17,10 +17,16 @@ typedef enum {
   INIT_STATE_DONE = 9999,
 } WfdClientInitState;
 
+typedef enum {
+  CONNECTION_TYPE_WFD  = 0,
+  CONNECTION_TYPE_RTSP = 1
+} WfdConnectionType;
+
 struct _WfdClient
 {
   GstRTSPClient      parent_instance;
 
+  WfdConnectionType  connection_type;
   guint              keep_alive_source_id;
 
   WfdClientInitState init_state;
@@ -396,7 +402,7 @@ wfd_client_new_session (GstRTSPClient *client, GstRTSPSession *session)
   gst_rtsp_session_set_timeout (session, 30);
   g_object_set (session, "timeout-always-visible", FALSE, NULL);
 
-  if (self->keep_alive_source_id == 0)
+  if (self->connection_type == CONNECTION_TYPE_WFD && self->keep_alive_source_id == 0)
     self->keep_alive_source_id = g_timeout_add_seconds (25, wfd_client_keep_alive_timeout, client);
 }
 
@@ -508,13 +514,14 @@ wfd_client_pre_options_request (GstRTSPClient *client, GstRTSPContext *ctx)
     {
       if (self->init_state != INIT_STATE_M2_SINK_QUERY_OPTIONS)
         {
-          g_warning ("WfdClient: Got OPTIONS before getting reply querying WFD support; assuming normal RTSP connection.");
+          g_message ("WfdClient: Got OPTIONS before getting reply querying WFD support; assuming normal RTSP connection.");
           /* The standard says to disconnect. However, if we do this,
            * then it is possible to connect a normal RTSP client for testing.
            * e.g. VLC will play back the stream correctly.
            *
-           * Also set a selected audio codec.
+           * Also flag the connection as "normal" RTSP and set a selected audio codec.
            */
+          self->connection_type = CONNECTION_TYPE_RTSP;
 
           /* Enable audio with AAC and 2 channels (48kHz), currently hardcoded in the media factory*/
           self->params->selected_audio_codec = wfd_audio_codec_new ();
