@@ -5,6 +5,7 @@
 #include "wfd-media-factory.h"
 #include "wfd-media.h"
 #include "wfd-params.h"
+#include "wfd-auth.h"
 
 typedef enum {
   INIT_STATE_M0_INVALID = 0,
@@ -396,6 +397,7 @@ wfd_client_keep_alive_timeout (gpointer user_data)
 static void
 wfd_client_new_session (GstRTSPClient *client, GstRTSPSession *session)
 {
+  g_autoptr(WfdAuth) auth = NULL;
   WfdClient *self = WFD_CLIENT (client);
 
   /* The WFD standard suggests a timeout of 30 seconds */
@@ -404,6 +406,17 @@ wfd_client_new_session (GstRTSPClient *client, GstRTSPSession *session)
 
   if (self->connection_type == CONNECTION_TYPE_WFD && self->keep_alive_source_id == 0)
     self->keep_alive_source_id = g_timeout_add_seconds (25, wfd_client_keep_alive_timeout, client);
+
+  /* Setup our own authenticator. Really, this is just a workaround for buggy
+   * clients and only exists because it is the only way to hook into the
+   * problematic request.
+   * Also, do it here, because doing it any earlier would mean we actually
+   * prompt for authentication; which we do not intend to do ever.
+   *
+   * Yes, this is a NASTY hack; see wfd-auth.c for more details!
+   */
+  auth = wfd_auth_new ();
+  gst_rtsp_client_set_auth (client, GST_RTSP_AUTH (auth));
 }
 
 static GstRTSPResult
