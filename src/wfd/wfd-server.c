@@ -1,6 +1,7 @@
 #include "wfd-server.h"
 #include "wfd-client.h"
 #include "wfd-media-factory.h"
+#include "wfd-session-pool.h"
 
 struct _WfdServer
 {
@@ -23,7 +24,12 @@ static guint signals[NR_SIGNALS];
 WfdServer *
 wfd_server_new (void)
 {
-  return g_object_new (WFD_TYPE_SERVER, NULL);
+  /* We use our own session pool. The only reason to do so is
+   * to shorten the session ID to 15 characters!
+   */
+  return g_object_new (WFD_TYPE_SERVER,
+                       "session-pool", wfd_session_pool_new (),
+                       NULL);
 }
 
 static void
