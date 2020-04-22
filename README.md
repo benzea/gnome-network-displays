@@ -135,7 +135,7 @@ following:
    be needed.
  * If you can, try to get a capture of another device discovering it.
    ```
-   iw phy phyX add interface mon0 type monitor
+   iw phy phyX interface add mon0 type monitor
    ip link set mon0 up
    ```
    Then connect to it using `wireshark`. You may need to disable your normal
