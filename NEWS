@@ -1,3 +1,11 @@
+GNOME Network Displays 0.90.3
+=============================
+
+ * Work around keep-alive problems with Microsoft v2 adapters (#20)
+ * Disable keep-alive for pure RTSP connections (#81)
+ * Work around LG devices by using a shorter session ID (#78)
+ * Plenty of other bugfixes
+
 GNOME Network Displays 0.90.2
 =============================
 
