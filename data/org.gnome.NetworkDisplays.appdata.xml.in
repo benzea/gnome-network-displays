@@ -19,4 +19,5 @@
 		</p>
 	</description>
 	<update_contact>bberg@gnome.org</update_contact>
+	<content_rating type="oars-1.1"/>
 </component>
