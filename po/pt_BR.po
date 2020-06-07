@@ -1,0 +1,113 @@
+# Portuguese translations for gnome-network-displays package
+# Traduções em português brasileiro para o pacote gnome-network-displays.
+# Copyright (C) 2020 THE gnome-network-displays'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-network-displays package.
+# Rafael Fontenelle <rafaelff@gnome.org>, 2020.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-network-displays\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-06-17 11:15+0200\n"
+"PO-Revision-Date: 2020-06-06 21:39-0300\n"
+"Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
+"Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
+"X-Generator: Gtranslator 3.36.0\n"
+"X-Project-Style: gnome\n"
+
+#: data/org.gnome.NetworkDisplays.desktop.in:3
+#: data/org.gnome.NetworkDisplays.appdata.xml.in:6
+msgid "GNOME Network Displays"
+msgstr "GNOME Tela via Rede"
+
+#. Translators: Do NOT translate or transliterate this text (this is an icon file name)!
+#: data/org.gnome.NetworkDisplays.desktop.in:6
+msgid "org.gnome.NetworkDisplays"
+msgstr "org.gnome.NetworkDisplays"
+
+#: data/org.gnome.NetworkDisplays.appdata.xml.in:7
+msgid "Stream the desktop to Wi-Fi Display capable devices"
+msgstr ""
+"Transmita do seu computador para dispositivos com capacidade de Wi-Fi Display"
+
+#: data/org.gnome.NetworkDisplays.appdata.xml.in:16
+msgid ""
+"GNOME Network Displays allows you to cast your desktop to a remote display. "
+"Currently implemented is support for casting to Wi-Fi Display capable "
+"devices (a.k.a. Miracast)."
+msgstr ""
+"GNOME Tela via Rede permite projetar seu computador em uma tela remota. "
+"Atualmente está implementado o suporte à projeção em dispositivos "
+"compatíveis com o Wi-Fi Display (também conhecido como Miracast)."
+
+#: src/nd-window.ui:74
+msgid "No Wi‑Fi P2P adapters found"
+msgstr "Nenhum adaptador Wi-Fi P2P encontrado"
+
+#: src/nd-window.ui:89
+msgid ""
+"No usable wireless adapters were found. Please verify that Wi‑Fi is enabled "
+"and Wi‑Fi P2P operations are available in both NetworkManager and "
+"wpa_supplicant."
+msgstr ""
+"Nenhum adaptador sem fio utilizável foi encontrado. Verifique se o Wi-Fi "
+"está ativado e as operações de Wi-Fi P2P estão disponíveis no NetworkManager "
+"e no wpa_supplicant."
+
+#: src/nd-window.ui:174
+msgid "Available Video Sinks"
+msgstr "Coletores de vídeo disponíveis"
+
+#: src/nd-window.ui:334
+msgid "Connecting"
+msgstr "Conectando"
+
+#: src/nd-window.ui:396 src/nd-window.ui:577
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: src/nd-window.ui:499
+msgid "Streaming"
+msgstr "Transmitindo"
+
+#: src/nd-window.ui:556 src/nd-window.ui:782
+msgid ""
+"One of the following video codec plugins is required.\n"
+"Clicking will start the installation process."
+msgstr ""
+"Um dos seguintes plugins de codec de vídeo é necessário.\n"
+"Clicar vai iniciar o processo de instalação."
+
+#: src/nd-window.ui:601 src/nd-window.ui:798
+msgid ""
+"One of the following audio codec plugins is required for audio support.\n"
+"Clicking will start the installation process."
+msgstr ""
+"Um dos seguintes plugins de codec de áudio é necessário para suporte a "
+"áudio.\n"
+"Clicar vai iniciar o processo de instalação."
+
+#: src/nd-window.ui:696
+msgid "Error"
+msgstr "Erro"
+
+#: src/nd-window.ui:758
+msgid "Return"
+msgstr "Retornar"
+
+#: src/nd-window.c:149
+msgid "Making P2P connection"
+msgstr "Fazendo a conexão P2P"
+
+#: src/nd-window.c:156
+msgid "Establishing connection to sink"
+msgstr "Estabelecendo conexão com o coletor"
+
+#: src/nd-window.c:163
+msgid "Starting to stream"
+msgstr "Iniciando a transmissão"
