@@ -1,5 +1,6 @@
 
 wfd_server_sources = [
+  'wfd-auth.c',
   'wfd-client.c',
   'wfd-media.c',
   'wfd-media-factory.c',
