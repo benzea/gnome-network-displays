@@ -1,3 +1,9 @@
+# WARNING
+# This project has been moved to https://gitlab.gnome.org/GNOME/gnome-network-displays
+## All issues have also been moved there.
+
+--------
+
 This is an experimental implementation of Wi-Fi Display (aka Miracast).
 
 The application will stream the selected monitor if the mutter screencast
